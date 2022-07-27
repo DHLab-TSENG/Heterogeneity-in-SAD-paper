@@ -48,9 +48,7 @@ h4 {
 ------------------------------------------------------------------------
 
 # Set up for environment
-
 ## Load libraries
-
 ```{r Library}
 .cran_pkgs <- c("data.table",
                 "dplyr",
@@ -83,7 +81,6 @@ sapply(.cran_pkgs,
 ```
 
 ## Install packages from git-hub
-
 ```{r Git-hub packages}
 .ghub_pkgs <- c("DHLab-TSENG/dxpr")
 
@@ -105,16 +102,13 @@ sapply(sapply(strsplit(.ghub_pkgs,"/"),`[`,2),
 ------------------------------------------------------------------------
 
 # Import data sets
-
 ## Raw data
-
 ```{r Raw data, echo=FALSE}
 raw_dataset <- 
   readRDS("./Dataset/A1_0_dateformated_deunfixable_sex_bday_raw_dataset.rds")
 ```
 
 ## Reference data for exams
-
 ```{r Reference data, echo=FALSE}
 exam_table <- 
   read.csv("./Dataset/exam_table.csv",stringsAsFactors = FALSE) %>% 
@@ -122,21 +116,12 @@ exam_table <-
   .[,ITEM_LABSH1IT := paste(ITEM,LABSH1IT,sep = "_")]
 
 ```
-
-```{r Quick view for reference data, eval=FALSE, echo=FALSE}
-### A quick view for reference data
-str(exam_table)
-
-```
-
 <br/>
 
 ------------------------------------------------------------------------
 
 # Data pre-process 
-
 ## Diagnosis data pre-process
-
 ```{r Diagnosis data preprocess, warning=FALSE, error=FALSE, message=FALSE, cache=TRUE}
 ICD10_implt_date <- "2016-01-01"
 diag_table_name  <- c("RSASOPDAF","RSASERDAF","RSASICDSUM")
@@ -176,11 +161,9 @@ for (i in diag_table_name) {
 } 
 
 ```
-
 <br/>
 
 ### Summarise Top20 Error ICD
-
 ```{r Summarise Error ICD, warning=FALSE}
 map(icd_conversion, 
     ~ plotICDError(errorFile = .x$Error,
@@ -189,11 +172,9 @@ map(icd_conversion,
                    others = FALSE,
                    topN = 20))
 ```
-
 <br/>
 
 ### Assign standardised (corrected) ICD Code to a new column and subset diagnosis related datasets
-
 ```{r Standardised ICD code and diagnosis dataset subseting}
 substitute_index <-
   map(diag_table_name, 
@@ -211,11 +192,9 @@ raw_dataset_list_dx <-
   setNames(.,diag_table_name)
 
 ```
-
 <br/>
 
 ## Define diseases and their corresponding ICD codes (grep with short form)
-
 ```{r Disease and corresponding ICD codes}
 disease_ICD_table <-
   data.table(grepIcd = c("^7140+.*|^M05[4,5,7,8,9]+.*|^M06[0,2,3,8,9]+.*",
@@ -242,11 +221,9 @@ disease_ICD_table <-
                          )
              )
 ```
-
 <br/>
 
 ### Identify disease groups
-
 ```{r Disease group identification}
 dx_data       <- rbindlist(raw_dataset_list_dx,use.name = TRUE,fill = TRUE)
 disease_group <- disease_ICD_table$Group
@@ -264,7 +241,6 @@ CustomGrepGroup <-
   map(.,~ setnames(.x,"GrepedGroup","Group",skip_absent = TRUE))
 
 ```
-
 <br/>
 
 ```{r eval=FALSE, message=FALSE, echo=FALSE}
@@ -276,7 +252,6 @@ saveRDS(CustomGrepGroup$summarised_groupedDT,"./Dataset/A1_2_diagnosis_Count_eac
 ```
 
 ### Identify eligible cases for each disease with grouped ICD code
-
 ```{r Eligible case identification, cache=TRUE}
 eligible_case_list <- 
   map(disease_group,
@@ -296,11 +271,9 @@ eligible_case_list <-
   setNames(.,disease_ICD_table$Group)
 
 ```
-
 <br/>
 
 ### Identify eligible monoCTD cases and exclude UCTD cases
-
 ```{r Eligible monoCTD case identification}
 eligible_mono_CTD_dx_dataset <- 
   pluck(CustomGrepGroup,"groupedDT") %>% 
@@ -313,7 +286,6 @@ eligible_mono_CTD_dx_dataset <-
   rbindlist(.)
 
 ```
-
 <br/>
 
 ```{r Remove unnecessary data, echo=FALSE, warning=FALSE, message=FALSE}
@@ -323,7 +295,6 @@ rm(raw_dataset_list_dx, icd_conversion, substitute_index)
 ```
 
 ## Pre-process for lab data - merge with DATE-related data
-
 ```{r lab and exam data preprocess}
 # Retrieve DATE-related data from LAB-INDEX files
 DAT_related_table <-
@@ -359,11 +330,9 @@ lab_exam_data <-
   .[LABIT %in% unique(exam_table$LABIT) ]
 
 ```
-
 <br/>
 
 ## Pre-process for rheumatology and immunology reports data - merge with DATE-related data
-
 ```{r report data preprocess}
 rheuma_immuno_grepTable <- 
   exam_table[str_detect(LABIT,"^M"),] %>% 
@@ -438,11 +407,9 @@ rheuma_immuno_report_data <-
   # (optional) Rearrange dataset
   .[order(ITEM_LABSH1IT,IDCODE,SCDATE),]
 ```
-
 <br/>
 
 ## Combine lab and rheumatology and immunology report data
-
 ```{r Combine lab and exam and report data}
 var_subset <- c("IDCODE","ITEM_LABSH1IT","SCDATE","LABRESUVAL")
 
@@ -455,13 +422,10 @@ lab_report_results <-
   .[order(IDCODE,SCDATE,ITEM_LABSH1IT)]
 
 ```
-
 <br/>
 
 ## Determining status of lab/report reulsts using specified cut-off points
-
 ### Create a result data container for the combined lab and rheumatology and immunology report data
-
 ```{r Create a result data container}
 complete_sex_bday_table <-
   pluck(raw_dataset,"RSASHOSP") %>% 
@@ -493,11 +457,9 @@ exam_result_dataset <-
   .[,SCDATE := ymd(SCDATE)]
 
 ```
-
 <br/>
 
 ### Clean raw results of lab/report data and merge processed data with reference information
-
 ```{r Clean raw results and merge reference information, message=FALSE, warning=FALSE, cache=TRUE}
 exam_result_dataset_ori <- exam_result_dataset
 exam_item <- unique(exam_result_dataset$ITEM_LABSH1IT)
@@ -701,11 +663,9 @@ for (i in exam_item) {
 }
 
 ```
-
 <br/>
 
 ### Determine status of exam results using specified cut-off points
-
 ```{r Status determination}
 exam_result_status_dataset <- 
   copy(exam_result_dataset) %>% 
@@ -777,11 +737,9 @@ exam_result_status_dataset <-
     Status := fifelse(evaluation_LABRESUVAL,"Normal",NA_character_)]
 
 ```
-
 <br/>
 
 ### Determine simultaneously the status for exam items with multiple test results
-
 ```{r Determination of stauts for multiple test results}
 simul_classify_item <- 
   list(c("72-134","M25-238"),                  # Rheumatoid factor (RF)
@@ -806,15 +764,12 @@ dup_exam_removed_result_status_dataset <-
   .[!LABSH1IT %in% dup_exam_item,]
 
 ```
-
 <br/>
 
 ------------------------------------------------------------------------
 
 ## Combine within-seven-day exam results
-
 ### Create merging index
-
 ```{r within-seven-day exam result merging, eval=TRUE}
 merge_within_boundary_data <- 
   # Calculate rolling difference in days and assign an column to indicate whether the row has been grouped
@@ -869,11 +824,9 @@ merge_index <-
   .[order(IDCODE,SCDATE),]
 
 ```
-
 <br/>
 
 ### Merge index with the original exam data to prepare final lab and report data
-
 ```{r Prepare for final lab and report data (within-seven-day exam results), eval=TRUE}
 exam_result_status_data <- 
   # Append grouping index to exam and report result data
@@ -901,15 +854,12 @@ exam_result_status_data <-
   .[,-c("mod_SCDATE")]
 
 ```
-
 <br/>
 
 ------------------------------------------------------------------------
 
 # Merge lab results with diagnosis data
-
 ## Calculate time intervals between the first exam and the first diagnosis using raw data
-
 ```{r Calculate time span between the first exam and diagnosis date}
 # Retrieve first diagnosis date 
 monoCTD_diagnosis_query_table <- 
@@ -941,61 +891,9 @@ monoCTD_first_diag_exam_span_raw_data <-
   .[order(IDCODE,ITEM_LABSH1IT,first_diag_exam_span_abs),head(.SD,1L),by = c("IDCODE","ITEM_LABSH1IT")]
 
 ```
-
 <br/>
 
-## Visualise gap distribution by histogram by each Group and Exam item
-
-```{r Visualise time span between the first exam and diagnosis date, message=FALSE, results=FALSE, warning=FALSE}
-disease_name <- eligible_mono_CTD_dx_dataset[,as.character(Group) %>% unique(.)]
-
-monoCTD_first_diag_exam_span_plot <- 
-  map(disease_name,
-      ~ copy(monoCTD_first_diag_exam_span_raw_data) %>% 
-        .[!is.na(Status),] %>% 
-        .[over_an_year=="No",] %>% 
-        .[Group %in% .x] %>% 
-      ggplot(data = .) +
-        geom_histogram(aes(x = first_diag_exam_span),bins = 50) +
-        geom_vline(aes(xintercept = 0),colour = "firebrick1",alpha = .5) +
-        geom_vline(aes(xintercept = 30),colour = "goldenrod1",alpha = .5) +
-        geom_vline(aes(xintercept = -30),colour = "goldenrod1",alpha = .5) +
-        scale_x_continuous(breaks = seq(-180,180,20),
-                           labels = seq(-180,180,20)) +
-        labs(title = .x) +
-        xlab("Interval between first diagnosis and first exam (days)") +
-        ylab("Number of exam results") +
-        theme_bw() +
-        theme(axis.text.x = element_text(size = rel(.4),angle = 60,hjust = 1),
-              axis.text.y = element_text(size = rel(.4)),
-              strip.text  = element_text(size = rel(.5)),
-              title       = element_text(size = rel(.9),face = "bold")) +
-        facet_wrap(ITEM_LABSH1IT ~ .,scales = "free_y")
-      )
-
-
-if(!dir.exists("./Data_Wrangling_files/first_diag_exam_span")) {
-   dir.create("./Data_Wrangling_files/first_diag_exam_span",recursive = TRUE)
-  }
-
-map2(disease_name,
-     monoCTD_first_diag_exam_span_plot,
-     ~ ggsave(filename = paste0("./Data_Wrangling_files/first_diag_exam_span/first_diag_exam_span_plot","_",.x,".jpeg"),
-              plot     = .y,
-              device   = "jpeg",
-              width = 10,height = 6,dpi = 500,unit = "in",
-              limitsize = FALSE)
-      )
-
-```
-
-<br/> 
-![Figure. Rheumatoid arthritis ](./Data_Wrangling_files/first_diag_exam_span/first_diag_exam_span_plot_Rheumatoid arthritis.jpeg  ) 
-![Figure. Dermatopolymyositis ](./Data_Wrangling_files/first_diag_exam_span/first_diag_exam_span_plot_Sjogren's syndrome.jpeg) 
-![Figure. Systemic lupus erythematosus ](./Data_Wrangling_files/first_diag_exam_span/first_diag_exam_span_plot_Systemic lupus erythematosus.jpeg)
-
 ## Calculate interval between first diagnosis and each exam records, and subset the data set by the specified intervals
-
 ```{r Subset data set by specified intervals}
 monoCTD_first_diag_exam_span_calculation_data <-
  copy(monoCTD_dup_exam_removed_result_status_dataset) %>%
@@ -1054,11 +952,9 @@ monoCTD_first_diag_exam_span_within_interval_limit_imputed_data <-
   .[is.na(Imp_Status),Imp_Status := "Normal"]
 
 ```
-
 <br/>
 
 # Prepare ready-for-analysis dataset
-
 ```{r Ready for analysis dataset}
 selected_variables <- 
   c("IDCODE","AGE","SEX","Group","First_diagnosis_date",
@@ -1069,7 +965,6 @@ monoCTD_ready_analysis_dataset <-
   .[,.SD,.SDcols = selected_variables]
 
 ```
-
 <br/>
 
 ```{r Quick view for ready-for-analysis data, echo=FALSE}
@@ -1080,7 +975,6 @@ str(.)
 saveRDS(monoCTD_ready_analysis_dataset,
         "./Dataset/A5_monoCTD_ready_analysis_dataset.rds")
 ```
-
 <br/>
 
 ```{r Remove all unnecessary data, echo=FALSE, warning=FALSE, message=FALSE, eval=FALSE}
@@ -1088,9 +982,8 @@ saveRDS(monoCTD_ready_analysis_dataset,
 rm(list=setdiff(ls(), "monoCTD_ready_analysis_dataset"))
 
 ```
-
 <br/>
 
-![</br>**Figure 1**</br>](./Heterogeneity-in-SCTD-paper_files/Figure 1. Eligibility and the number of study subjects.jpeg)
+![</br>**Figure 1**</br>](./Data_Wrangling_files/Figure 1. Eligibility and the number of study subjects.pdf)
 **Figure 1. Eligibility and the number of study subjects.**
 (RA, rheumatoid arthritis; SLE, systemic lupus erythematosus; SS, Sjögren’s syndrome)

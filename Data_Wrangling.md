@@ -963,57 +963,6 @@ monoCTD_first_diag_exam_span_raw_data <-
 
 <br/>
 
-## Visualise gap distribution by histogram by each Group and Exam item
-
-``` r
-disease_name <- eligible_mono_CTD_dx_dataset[,as.character(Group) %>% unique(.)]
-
-monoCTD_first_diag_exam_span_plot <- 
-  map(disease_name,
-      ~ copy(monoCTD_first_diag_exam_span_raw_data) %>% 
-        .[!is.na(Status),] %>% 
-        .[over_an_year=="No",] %>% 
-        .[Group %in% .x] %>% 
-      ggplot(data = .) +
-        geom_histogram(aes(x = first_diag_exam_span),bins = 50) +
-        geom_vline(aes(xintercept = 0),colour = "firebrick1",alpha = .5) +
-        geom_vline(aes(xintercept = 30),colour = "goldenrod1",alpha = .5) +
-        geom_vline(aes(xintercept = -30),colour = "goldenrod1",alpha = .5) +
-        scale_x_continuous(breaks = seq(-180,180,20),
-                           labels = seq(-180,180,20)) +
-        labs(title = .x) +
-        xlab("Interval between first diagnosis and first exam (days)") +
-        ylab("Number of exam results") +
-        theme_bw() +
-        theme(axis.text.x = element_text(size = rel(.4),angle = 60,hjust = 1),
-              axis.text.y = element_text(size = rel(.4)),
-              strip.text  = element_text(size = rel(.5)),
-              title       = element_text(size = rel(.9),face = "bold")) +
-        facet_wrap(ITEM_LABSH1IT ~ .,scales = "free_y")
-      )
-
-
-if(!dir.exists("./Data_Wrangling_files/first_diag_exam_span")) {
-   dir.create("./Data_Wrangling_files/first_diag_exam_span",recursive = TRUE)
-  }
-
-map2(disease_name,
-     monoCTD_first_diag_exam_span_plot,
-     ~ ggsave(filename = paste0("./Data_Wrangling_files/first_diag_exam_span/first_diag_exam_span_plot","_",.x,".jpeg"),
-              plot     = .y,
-              device   = "jpeg",
-              width = 10,height = 6,dpi = 500,unit = "in",
-              limitsize = FALSE)
-      )
-```
-
-<br/> ![Figure. Rheumatoid
-arthritis](./Data_Wrangling_files/first_diag_exam_span/first_diag_exam_span_plot_Rheumatoid%20arthritis.jpeg)
-![Figure.
-Dermatopolymyositis](./Data_Wrangling_files/first_diag_exam_span/first_diag_exam_span_plot_Sjogren's%20syndrome.jpeg)
-![Figure. Systemic lupus
-erythematosus](./Data_Wrangling_files/first_diag_exam_span/first_diag_exam_span_plot_Systemic%20lupus%20erythematosus.jpeg)
-
 ## Calculate interval between first diagnosis and each exam records, and subset the data set by the specified intervals
 
 ``` r
@@ -1105,7 +1054,7 @@ monoCTD_ready_analysis_dataset <-
 <br/>
 
 ![</br>**Figure
-1**</br>](./Heterogeneity-in-SCTD-paper_files/Figure%201.%20Eligibility%20and%20the%20number%20of%20study%20subjects.jpeg)
+1**</br>](./Data_Wrangling_files/Figure%201.%20Eligibility%20and%20the%20number%20of%20study%20subjects.pdf)
 **Figure 1. Eligibility and the number of study subjects.** (RA,
 rheumatoid arthritis; SLE, systemic lupus erythematosus; SS, Sjögren’s
 syndrome)

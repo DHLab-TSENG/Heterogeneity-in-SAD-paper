@@ -45,9 +45,9 @@ h4 {
 ```
 
 ***
+
 # Set up for environment
 ## Load libraries
-
 ```{r Library, warning=FALSE, message=FALSE, warning=FALSE}
 .cran_pkgs <- c("data.table",
                 "dplyr",
@@ -163,9 +163,8 @@ exam_table <-
 
 ***
 
-# Section V. [emr-clust] 特徵篩選
-## Data preparation for feature selection
-### Transform datset into wide format by exam items
+# Data preparation for feature selection
+## Transform datset into wide format by exam items
 ```{r Transform into wide format}
 clustering_analysis_data <- 
   copy(monoCTD_dataset) %>% 
@@ -189,7 +188,7 @@ clustering_analysis_data <-
 ```
 <br/>
 
-### Subset for selected diseases
+## Subset for selected diseases
 ```{r Subset for selected diseases}
 clustering_analysis_data <- 
   clustering_analysis_data[Group %in% selected_disease_groups,]
@@ -197,7 +196,7 @@ clustering_analysis_data <-
 ```
 <br/>
 
-### Remove variables with single unique value (no information; all Normal)
+## Remove variables with single unique value (no information; all Normal)
 ```{r Remove variables without information}
 redundant_vars <- 
   copy(clustering_analysis_data) %>% 
@@ -206,8 +205,8 @@ redundant_vars <-
 ```
 <br/>
 
-## Feature selection
-### Kaiser–Meyer–Olkin (KMO) test for the measure of adequacy (MSA)
+# Feature selection
+## Kaiser–Meyer–Olkin (KMO) test for the measure of adequacy (MSA)
 ```{r Feature selection by KMO test, warning = FALSE}
 MSA_cutoff  <- 0.6
 MSAi_cutoff <- 0.5
@@ -265,7 +264,7 @@ print(KMO_iter_results)
 ```
 <br/>
 
-### Test to check whether the correlation matrix is an identity matrix by Bartlett’s test of Sphericity
+## Test to check whether the correlation matrix is an identity matrix by Bartlett’s test of Sphericity
 ```{r Bartlett’s test of Sphericity, warning=FALSE}
 Bart_results <- 
   cortest.bartlett(mod_cramerV_iter_dataset,
@@ -276,8 +275,8 @@ print(Bart_results$p.value)
 ```
 <br/>
 
-## Data preparation for clustering analysis
-### Collect variables to be removed
+# Data preparation for clustering analysis
+## Collect variables to be removed
 ```{r Variables to be removed}
 removed_variables <- 
   # remove variables with single unique value (all results are Normal)
@@ -295,7 +294,7 @@ removed_variables <-
 ```
 <br/>
 
-### Prepare the dataset for clustering analysis 
+## Prepare the dataset for clustering analysis 
 ```{r Prepare the dataset for clustering analysis}
 clustering_analysis_ready_data <-  
   copy(clustering_analysis_data) %>% 
@@ -304,15 +303,8 @@ clustering_analysis_ready_data <-
 ```
 <br/>
 
-#### A quick view for ready analysis dataset
-```{r Quick view for ready for clustering data}
-str(clustering_analysis_ready_data)
-```
-<br/>
-
-# Section VI. [emr-clust] 資料降維 + 分群分析
-## Clustering analysis - by the MCA/k-means method
-### Run the algorithm (!should test for multiple seeds)
+# Clustering analysis - by the MCA/k-means method
+## Run the algorithm (!should test for multiple seeds)
 ```{r Clustering analsyis: MCA/k-means method, warning=FALSE, message=FALSE, cache=TRUE}
 plan(multisession, workers = 5)
 
@@ -347,9 +339,8 @@ map(result_list_name,
 
 ***
 
-# Section VII. [emr-clust] 分群結果視覺化
-## Result presentation for distribution of variables 
-### Prepare for result datasets
+# Result presentation for distribution of variables 
+## Prepare for result datasets
 ```{r Prepare for result datasets}
 PC_data <-
   # Retrieve the best result object
@@ -395,7 +386,7 @@ saveRDS(attr_data,"./Dataset/attr_data.rds")
 
 ```
 
-### Prepare for tabulating distribution of variables within disease groups
+## Prepare for tabulating distribution of variables within disease groups
 ```{r Prepare for tabulating distributions}
 auto_antibody_string <- unique(sapply(str_split(attr_data$Attr_mdf,"_"),`[`,2))
 
@@ -480,7 +471,7 @@ table_one_categorical_var <-
 ```
 <br/>
 
-### Generate the table of distribution of variables within disease groups
+## Generate the table of distribution of variables within disease groups
 ```{r Generate the table of distribution of variables}
 # Create customised column title
 table_lable <- 
@@ -550,7 +541,7 @@ table_one_flextable <-
 ```
 <br/>
 
-### Table of distribution of variables within disease groups
+## Table of distribution of variables within disease groups
 ```{r Table of distribution of variables within disease groups, echo=FALSE,message=FALSE,results='hide'}
 save_as_image(table_one_flextable,
               path = "./Clustering_Analysis_files/Table_of_distribution_of_variables.png",
@@ -567,8 +558,8 @@ save_as_image(table_one_flextable,
 
 ***
 
-## Result presentation for clustering results
-### Biplot of the first and second principal components
+# Result presentation for clustering results
+## Biplot of the first and second principal components
 ```{r Biplot by principal components}
 variable_list <- 
   map(c(sum(str_detect(names(PC_data),"^PC")):2),
@@ -651,7 +642,7 @@ walk2(clustering_biplots,
 <br/>
 
 
-### Profile the number and proportion of case in each cluster
+## Profile the number and proportion of case in each cluster
 ```{r Number and proportion of case in each cluster}
 cluster_size_string <- 
   copy(PC_data) %>% 
@@ -738,7 +729,7 @@ ggsave(filename = paste0("./Clustering_Analysis_files/Cluster_profile/",
 ```
 <br/>
 
-### Profile the number and proportion of case in each group
+## Profile the number and proportion of case in each group
 ```{r Number and proportion of case in each group}
 cluster_size_string <- 
   copy(PC_data) %>% 
@@ -821,7 +812,7 @@ ggsave(filename = paste0("./Clustering_Analysis_files/Cluster_profile/",
 ```
 <br/>
 
-### Combine the plots to present in a single frame - Figure 2
+## Combine the plots to present in a single frame - Figure 2
 ```{r Combine the plots to present in a single frame - Figure 2, message=FALSE, results='hide', warning=FALSE ,echo=FALSE}
 concatenated_clustering_results_plot <- 
   ggarrange(clustering_biplots[[1]],
@@ -846,8 +837,8 @@ ggexport(concatenated_clustering_results_plot,
 **Figure 2. Diversely clustered SCTD patients based on the immunomarkers.** **(A) Clusters of the patients obtained from MCA k-means with the abnormal immunomarkers contributing to the lowest two principal components (PCs).** In Figure 2A, coloured points with disease labelled in shapes represent the patients, and the immunomarkers of abnormal result are black crosses (x) along with the names of the immunomarkers. The relative locations between a cluster’s centroid and immunomarkers suggest the tendency, compared with other clusters, of patients in a specific cluster to test abnormal for immunomarkers located nearby. For example, Cluster 3 is located near C3, C4, anti-dsDNA, anti-BMZA, and B2GP1G, suggesting patients in the cluster are more likely to test abnormal for these immunomarkers. **(B) SCTDs are grouped into six distinct clusters.** The SCTDs cases (including RA, SLE, and SS) are reassigned to six distinct clusters based on the pattern of immunomarkers. Each cluster is composed of multiple SCTDs. For example, Cluster 2 is composed of SLE, SS, and a few RA cases. The heterogeneity indicates that the cases manifest similar immunomarker pattern even they are diagnosed with different SCTD diagnoses. **(C) Heterogeneity of the SCTDs.** RA distribute predominantly only in Cluster 1. High heterogeneity is noted for SLE and SS. SS cases can manifest the immunomarker patterns of Cluster 1, 2, 4, and 5. SLE cases can be also found in Cluster 2 and 3.
 <br/>
 
-## Result presentation for immunomarker profile
-### Profile the proportion of status in each exam item by clusters
+# Result presentation for immunomarker profile
+## Profile the proportion of status in each exam item by clusters
 ```{r Proportion of status in each exam item by clusters}
 exam_items <- attr_data[,str_replace_all(Attr_mdf,"AbN_|N_","") %>% unique(.)]
 
@@ -879,7 +870,7 @@ profile_status_by_item_data <-
 ```
 <br/>
 
-### Prepare for immunomarker profile plot data
+## Prepare for immunomarker profile plot data
 ```{r Immunomarker profile plot data}
 radar_plot_item_order <- 
   split(profile_status_by_item_data,by = "Cluster") %>% 
@@ -918,7 +909,7 @@ profile_status_by_item_plot_data <-
 ```
 <br/>
 
-### Profile immunomarker status by cluster - overlapped
+## Profile immunomarker status by cluster - overlapped
 ```{r Immunomarker status by cluster - overlapped}
 # A function for change the colour transparency of a given colour set
 t_col <- 
@@ -977,7 +968,7 @@ ggsave(filename = paste0("./Clustering_Analysis_files/Cluster_profile/",
 ```
 <br/>
 
-### Profile immunomarker status by cluster - separated
+## Profile immunomarker status by cluster - separated
 ```{r Immunomarker status by cluster - separated}
 profile_status_by_item_roseplot <-
   copy(profile_status_by_item_plot_data) %>% 
@@ -1025,8 +1016,8 @@ ggsave(filename = paste0("./Clustering_Analysis_files/Cluster_profile/",
 ```
 <br/>
 
-## Sum of sensitivity and specificity
-### Data preps
+# Sum of sensitivity and specificity
+## Data preps
 ```{r Sum of sensitivity and specificity data preparation}
 # --------------------------------------------------------------------------------------------------------------
 sen_spe_data_prep <- 
@@ -1085,7 +1076,7 @@ sens_spec_result_data <-
 ```
 <br/>
 
-### Profile for the sum of sensitivity and specificity
+## Profile for the sum of sensitivity and specificity
 ```{r Sum of sensitivity and specificity result visulisation, message=FALSE}
 sens_spec_result_plot <- 
   copy(sens_spec_result_data) %>% 
@@ -1123,7 +1114,7 @@ ggsave(filename = paste0("./Clustering_Analysis_files/Cluster_profile/",
 ```
 <br/>
 
-### Combine the plots to present in a single frame - Figure 3
+# Combine the plots to present in a single frame - Figure 3
 ```{r Combine the plots to present in a single frame - Figure 3, message=FALSE, results='hide', warning=FALSE ,echo=FALSE}
 concatenated_immunomarkers_profile_plot <- 
   ggarrange(ggarrange(profile_status_by_item_roseplot,
