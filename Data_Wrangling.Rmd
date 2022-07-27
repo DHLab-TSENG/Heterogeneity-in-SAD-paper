@@ -1091,6 +1091,6 @@ rm(list=setdiff(ls(), "monoCTD_ready_analysis_dataset"))
 
 <br/>
 
-![</br>**Figure 1**</br>](./Heterogeneity_in_SCTDs_files/Figure 1. Eligibility and the number of study subjects.jpeg)
+![</br>**Figure 1**</br>](./Heterogeneity-in-SCTD-paper_files/Figure 1. Eligibility and the number of study subjects.jpeg)
 **Figure 1. Eligibility and the number of study subjects.**
 (RA, rheumatoid arthritis; SLE, systemic lupus erythematosus; SS, Sjögren’s syndrome)
