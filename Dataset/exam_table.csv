@@ -1,0 +1,53 @@
+﻿LABIT,LABSH1IT,LABNMABV,ITEM,Ref_LABVALUN,Ref_SEX,Ref_AGE,Ref_Duration,Ref_Neg_L_Bound,Ref_Neg_U_Bound,Ref_Equ_L_Bound,Ref_Equ_U_Bound,Ref_Pos_L_Bound,Ref_Pos_U_Bound,non_Dich_Category,Patterns
+72-013,72-013,ESR,Erythrocyte sedimentation rate (ESR),-,M,<=50,-,>=0,<=15,-,-,-,-,N,-
+72-013,72-013,ESR,Erythrocyte sedimentation rate (ESR),-,M,>50,-,>=0,<=20,-,-,-,-,N,-
+72-013,72-013,ESR,Erythrocyte sedimentation rate (ESR),-,F,<=50,-,>=0,<=20,-,-,-,-,N,-
+72-013,72-013,ESR,Erythrocyte sedimentation rate (ESR),-,F,>50,-,>=0,<=30,-,-,-,-,N,-
+72-112,72-112,CRP,C-reactive protein (CRP),-,-,-,-,-,<5,-,-,-,-,N,-
+72-547,72-547,CRP-Emr,C-reactive protein Emr (CRP-Emr),-,-,-,-,-,<5,-,-,-,-,N,-
+72-129,72-129,DC IgG,Direct coombs IgG,-,-,-,-,-,-,-,-,-,-,N,-
+72-134,72-134,RF,Rheumatoid factor (RF),-,-,-,-,-,<=6,-,-,-,-,N,-
+72-214,72A214,FLC Kappa,Free light chain kappa,-,-,-,-,>=3.3,<=19.4,-,-,-,-,N,-
+72-214,72B214,FLC Lambda,Free light chain lambda,-,-,-,-,>=5.71,<=26.3,-,-,-,-,N,-
+72-214,72C214,FLC K/L,Free light chain kappa/lambda,-,-,-,-,>=0.26,<=1.65,-,-,-,-,N,-
+72-217,72-217,C3,Complement-3 (C3),N/A,-,-,-,>=90,<=180,-,-,-,-,N,-
+72-217,72-217,C3,Complement-3 (C3),mg/dL,-,-,-,>=90,<=180,-,-,-,-,N,-
+72-217,72-217,C3,Complement-3 (C3),mg%,-,-,-,>=83,<=180,-,-,-,-,N,-
+72-219,72-219,C4,Complement-4 (C4),N/A,-,-,-,>=10,<=40,-,-,-,-,N,-
+72-219,72-219,C4,Complement-4 (C4),mg/dL,-,-,-,>=10,<=40,-,-,-,-,N,-
+72-219,72-219,C4,Complement-4 (C4),mg%,-,-,-,>=18,<=45,-,-,-,-,N,-
+72-220,72-220,CH50 Assay,CH50 Complement activation enzyme immunoassay (CH50-CAE),-,-,-,-,>=63,<=145,-,-,-,-,N,-
+72-239,72-239,CRYOID,Cryoblobulin Identification,-,-,-,-,-,-,-,-,-,-,N,-
+72-241,72-241,CRYOFIBRI,Cryofibrinogen Identification,-,-,-,-,-,-,-,-,-,-,N,-
+72-245,72-245,ANA,Antinuclear antibody (ANA),-,-,-,-,-,<80,-,-,-,-,N,-
+72-245,72A245,ANA,Antinuclear antibody (ANA),-,-,-,-,-,<80,-,-,-,-,N,-
+72-245,72B245,ANA,Antinuclear antibody (ANA),-,-,-,-,-,<80,-,-,-,-,N,-
+72-245,72C245,ANA,Antinuclear antibody (ANA),-,-,-,-,-,<80,-,-,-,-,N,-
+72-247,72-247,Anti-dsDNA,anti-Double strand DNA antibody (anti-dsDNA),N/A,-,-,-,-,<=92.6,>92.6,<139,>=139,-,Y,-
+72-247,72-247,Anti-dsDNA,anti-Double strand DNA antibody (anti-dsDNA),WHOunit/mL,-,-,-,-,<=92.6,>92.6,<139,>=139,-,Y,-
+72-247,72-247,Anti-dsDNA,anti-Double strand DNA antibody (anti-dsDNA),IU/mL,-,-,-,-,<35,>=35,<=55,>55,-,Y,-
+72-249,72-249,Anti-ICSA,Intracellular substance antibody,-,-,-,-,-,-,-,-,-,-,N,-
+72-251,72-251,Anti-BMZA,Basement membrane zone antibody,-,-,-,-,-,-,-,-,-,-,N,-
+72-260,72-260,Anti-TPO,anti-Thyroid peroxidase antibody (anti-TPO),-,-,-,-,-,<5.6,-,-,-,-,N,-
+72-263,72-263,Anti-THYG,anti-Thyroglobulin antibody (anti-Tg),-,-,-,-,-,<115,-,-,-,-,N,-
+72-292,72-292,AQP4-autoAb,AQP4 autoantibody,-,-,-,-,-,<3,-,-,-,-,N,-
+72-295,72-295,GAD-Ab,Glutamic acid decarboxylase 65 antibody (GAD),-,-,-,>=2020,-,<10,-,-,-,-,N,-
+72-295,72-295,GAD-Ab,Glutamic acid decarboxylase 65 antibody (GAD),-,-,-,2018-2019,-,<5,-,-,-,-,N,-
+72-295,72-295,GAD-Ab,Glutamic acid decarboxylase 65 antibody (GAD),-,-,-,<=2017,-,<1,-,-,-,-,N,-
+72-373,72-373,Anti-TSHR,anti-TSH receptor antibody (TSHR),-,-,-,-,-,<1.75,-,-,-,-,N,-
+M25-212,M25-212,Anti-RNP-Sm,anti-ribonucleoprotein and Smith antibody (anti-RNP-Sm),-,-,-,-,-,<5,>=5,<=10,>10,-,Y,Anti-U1RNP|Anti-RNP|Anti-Sm|Anti-SmDp|Anti-SM|Anti-SMD
+M25-213,M25-213,Anti-SSA,anti-SSA antibody (anti-SSA),-,-,-,-,-,<7,>=7,<=10,>10,-,Y,Anti-SSA|SSA
+M25-213,M25-213,Anti-SSB,anti-SSB antibody (anti-SSB),-,-,-,-,-,<7,>=7,<=10,>10,-,Y,Anti-SSB|SSB
+M25-221,M25-221,Anti-Jo,anti-Jo-1 antibody (anti-Jo),-,-,-,-,-,<7,>=7,<=10,>10,-,Y,Anti-Jo|Anti\\sJo
+M25-214,M25-214,Anti-Scl,anti-Scl antibody (anti-Scl),-,-,-,-,-,<7,>=7,<=10,>10,-,Y,Anti-Scl|Scl
+M25-140,M25-140,Anti-CENP,anti-centromere antibody (anti-CENP),-,-,-,-,-,<7,>=7,<=10,>10,-,Y,Anti-CENP|CENP|Anti-ce|Anti ce
+M25-215,M25-215,Anti-histone,anti-histone antibody (anti-histone),-,-,-,-,-,-,-,-,-,-,N,Anti-Histone|Histone
+M25-143,M25-143,Anti-RibP,anti-ribosomal P antibody (anti-RibP),-,-,-,-,-,<7,>=7,<=10,>10,-,Y,Anti-Ribosomal P|Anti Rib-P|Anti-Rib
+M25-216,M25-216,ACAG,anti-cardiolipin antibody IgG (ACAG),-,-,-,-,-,<10,>=10,<=15,>15,-,Y,Anti-Cardiolipin IgG|Anti-Cardiolipin-IgG|IgG class anti-cardiolipin Ab
+M25-216A,M25-216A,ACAM,anti-cardiolipin antibody IgM (ACAM),-,-,-,-,-,<10,>=10,<=15,>15,-,Y,Anti-Cardiolipin IgM|Anti-Cardiolipin-IgM|IgM class anti-cardiolipin Ab
+M25-137,M25-137,B2GP1G,beta2-glycoprotein 1 IgG (B2GP1G),-,-,-,-,-,<7,-,-,-,-,N,Anti-b2-Glycoprotein 1 Ab IgG
+M25-144,M25-144,Anti-Pl-IgG,anti-phospholipid IgG (anti-Pl-IgG),-,-,-,-,-,-,-,-,-,-,N,IgG class anti-phospholipin Ab
+M25-145,M25-145,Anti-Pl-IgM,anti-phospholipid IgM (atni-Pl-IgM),-,-,-,-,-,-,-,-,-,-,N,IgM class anti-phospholipin Ab
+M25-238,M25-238,RF-IgM,Rheumatoid factor IgM (RF-IgM),-,-,-,-,-,<20,-,-,-,-,N,Rheumatoid Factor
+M25-150,M25-150,Anti-dsDNA,anti-Double strand DNA antibody (anti-dsDNA),-,-,-,-,-,<10,>=10,<=15,>15,-,Y,ds DNA
+M25-139,M25-139,Anti-CCP,anti-cyclic citrullinated peptide antibody,-,-,-,-,-,<7,>=7,<=10,>10,-,N,Anti-CCP | CCP
