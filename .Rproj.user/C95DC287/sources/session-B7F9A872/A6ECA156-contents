@@ -1,0 +1,25 @@
+git remote add origin https://github.com/cwchang-nereus/monoCTD_Workflow.git
+git remote update
+
+git remote set-url origin https://github.com/DHLab-TSENG/Heterogeneity-in-SCTD-paper.git
+git remote update
+
+# echo "# monoCTD_workflow" >> README.md
+# git config --global init.defaultBranch main
+# git init
+
+git add .
+git commit -m "Update"
+git branch -M main
+git remote add origin https://github.com/DHLab-TSENG/Heterogeneity-in-SCTD-paper.git
+git push -u origin main
+
+# git push -fu origin main
+git pull origin main # to update from github website
+
+
+# To check
+git status
+git log
+git diff-tree --no-commit-id --name-only -r [commit ID]
+git diff
