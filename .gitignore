@@ -1,0 +1,15 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+Dataset/D1_1_concatenated_diagnosis_data(dt_query_dx_data).rds
+Dataset/A1_0_dateformated_deunfixable_sex_bday_raw_dataset.rds
+Dataset/A1_1_diagnosis_eachDate_data.rds
+Dataset/A1_2_diagnosis_Count_eachDx_data.rds
+Dataset/A5_monoCTD_ready_analysis_dataset.rds
+Dataset/PC_data.rds
+Dataset/attr_data.rds
+Heterogeneity-in-SCTD-paper.RData
+Data_Wrangling_cache/
+Clustering_Analysis_cache/
+Clinical_Implications_Analysis_cache/
