@@ -968,10 +968,6 @@ monoCTD_ready_analysis_dataset <-
 <br/>
 
 ```{r Quick view for ready-for-analysis data, echo=FALSE}
-copy(monoCTD_ready_analysis_dataset) %>% 
-  { .[,.SD,.SDcols = -str_subset(names(.),"IDCODE|ID|LABNO")] } %>% 
-str(.)
-
 saveRDS(monoCTD_ready_analysis_dataset,
         "./Dataset/A5_monoCTD_ready_analysis_dataset.rds")
 ```
@@ -984,6 +980,7 @@ rm(list=setdiff(ls(), "monoCTD_ready_analysis_dataset"))
 ```
 <br/>
 
-![</br>**Figure 1**</br>](./Data_Wrangling_files/Figure 1. Eligibility and the number of study subjects.jpeg)
-**Figure 1. Eligibility and the number of study subjects.**
+![</br>**Figure 1**</br>](./Data_Wrangling_files/Figure 1. Eligibility and the number of study subject.jpeg)
+<br/>
+**Figure 1. Eligibility and the number of study subjects.**<br/>
 (RA, rheumatoid arthritis; SLE, systemic lupus erythematosus; SS, Sjögren’s syndrome)

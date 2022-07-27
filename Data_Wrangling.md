@@ -1039,22 +1039,12 @@ monoCTD_ready_analysis_dataset <-
 
 <br/>
 
-    ## Classes 'data.table' and 'data.frame':   551376 obs. of  7 variables:
-    ##  $ AGE                 : num  64 64 64 64 64 64 64 64 64 64 ...
-    ##  $ SEX                 : chr  "F" "F" "F" "F" ...
-    ##  $ Group               : Factor w/ 9 levels "Rheumatoid arthritis",..: 4 4 4 4 4 4 4 4 4 4 ...
-    ##  $ First_diagnosis_date: Date, format: "2015-05-13" "2015-05-13" ...
-    ##  $ ITEM_LABSH1IT       : Factor w/ 36 levels "AQP4 autoantibody_72-292",..: 1 2 3 4 5 6 7 8 9 10 ...
-    ##  $ SCDATE              : Date, format: "2015-05-07" "2015-05-07" ...
-    ##  $ Imp_Status          : chr  "Normal" "Abnormal" "Normal" "Normal" ...
-    ##  - attr(*, ".internal.selfref")=<externalptr>
-
 <br/>
 
 <br/>
 
 ![</br>**Figure
-1**</br>](./Data_Wrangling_files/Figure%201.%20Eligibility%20and%20the%20number%20of%20study%20subjects.jpeg)
-**Figure 1. Eligibility and the number of study subjects.** (RA,
-rheumatoid arthritis; SLE, systemic lupus erythematosus; SS, Sjögren’s
-syndrome)
+1**</br>](./Data_Wrangling_files/Figure%201.%20Eligibility%20and%20the%20number%20of%20study%20subject.jpeg)
+<br/> **Figure 1. Eligibility and the number of study subjects.**<br/>
+(RA, rheumatoid arthritis; SLE, systemic lupus erythematosus; SS,
+Sjögren’s syndrome)
