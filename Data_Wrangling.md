@@ -1054,7 +1054,7 @@ monoCTD_ready_analysis_dataset <-
 <br/>
 
 ![</br>**Figure
-1**</br>](./Data_Wrangling_files/Figure%201.%20Eligibility%20and%20the%20number%20of%20study%20subjects.pdf)
+1**</br>](./Data_Wrangling_files/Figure%201.%20Eligibility%20and%20the%20number%20of%20study%20subjects.jpeg)
 **Figure 1. Eligibility and the number of study subjects.** (RA,
 rheumatoid arthritis; SLE, systemic lupus erythematosus; SS, Sjögren’s
 syndrome)

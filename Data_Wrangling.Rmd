@@ -460,7 +460,7 @@ exam_result_dataset <-
 <br/>
 
 ### Clean raw results of lab/report data and merge processed data with reference information
-```{r Clean raw results and merge reference information, message=FALSE, warning=FALSE, cache=TRUE}
+```{r Clean raw results and merge reference information, message=FALSE, warning=FALSE}
 exam_result_dataset_ori <- exam_result_dataset
 exam_item <- unique(exam_result_dataset$ITEM_LABSH1IT)
 indicator_vars <- c("Ref_LABVALUN","Ref_SEX","Ref_AGE","Ref_Duration")
@@ -770,7 +770,7 @@ dup_exam_removed_result_status_dataset <-
 
 ## Combine within-seven-day exam results
 ### Create merging index
-```{r within-seven-day exam result merging, eval=TRUE}
+```{r within-seven-day exam result merging, eval=TRUE, cache=TRUE}
 merge_within_boundary_data <- 
   # Calculate rolling difference in days and assign an column to indicate whether the row has been grouped
   function(data = data,
@@ -984,6 +984,6 @@ rm(list=setdiff(ls(), "monoCTD_ready_analysis_dataset"))
 ```
 <br/>
 
-![</br>**Figure 1**</br>](./Data_Wrangling_files/Figure 1. Eligibility and the number of study subjects.pdf)
+![</br>**Figure 1**</br>](./Data_Wrangling_files/Figure 1. Eligibility and the number of study subjects.jpeg)
 **Figure 1. Eligibility and the number of study subjects.**
 (RA, rheumatoid arthritis; SLE, systemic lupus erythematosus; SS, Sjögren’s syndrome)
