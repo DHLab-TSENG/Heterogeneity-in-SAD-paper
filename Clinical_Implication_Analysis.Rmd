@@ -787,7 +787,7 @@ concatenated_comorbidity_prevalence_byGroup_plot <-
   theme(title = element_text(size = rel(.8), face = "bold"))
 
 ggexport(concatenated_comorbidity_prevalence_byGroup_plot,
-         filename = paste0("./Clinical_Implications_Analysis_files/",
+         filename = paste0("./Clinical_Implication_Analysis_files/",
                            "Figure4_concatenated_comorbidity_prevalence_byGroup_plot",
                            ".jpeg"),
          width = 8000,height = 13000,res = 1000,verbose = FALSE)
