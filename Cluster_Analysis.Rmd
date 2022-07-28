@@ -126,13 +126,9 @@ sapply(sapply(strsplit(.ghub_pkgs,"/"),`[`,2),
 ## monoCTD ready analysis dataset
 ```{r monoCTD dataset, echo=FALSE}
 monoCTD_dataset <- 
-  # readRDS("./Dataset/A5_monoCTD_ready_analysis_dataset_-90to+30.rds") %>%
   readRDS("./Dataset/A5_monoCTD_ready_analysis_dataset.rds") %>%
   # Subset subjects first diagnosed between 2001 and 2016
   .[data.table::between(year(First_diagnosis_date),lower = 2001,upper = 2016),]
-  # an ad hoc step due to use original data (can be removed while using data wrangling script in this project)
-  # .[,.SD,.SDcols = -c("overall_Status")] %>%
-  # setnames(.,"mod_SCDATE","SCDATE")
 
 ```
 
@@ -166,7 +162,7 @@ exam_table <-
 # Data preparation for feature selection
 ## Transform datset into wide format by exam items
 ```{r Transform into wide format}
-clustering_analysis_data <- 
+cluster_analysis_data <- 
   copy(monoCTD_dataset) %>% 
    .[,':=' (ITEM     = str_split(ITEM_LABSH1IT,"_",simplify = TRUE)[,1],
             LABSH1IT = str_split(ITEM_LABSH1IT,"_",simplify = TRUE)[,2])] %>% 
@@ -190,8 +186,8 @@ clustering_analysis_data <-
 
 ## Subset for selected diseases
 ```{r Subset for selected diseases}
-clustering_analysis_data <- 
-  clustering_analysis_data[Group %in% selected_disease_groups,]
+cluster_analysis_data <- 
+  cluster_analysis_data[Group %in% selected_disease_groups,]
 
 ```
 <br/>
@@ -199,7 +195,7 @@ clustering_analysis_data <-
 ## Remove variables with single unique value (no information; all Normal)
 ```{r Remove variables without information}
 redundant_vars <- 
-  copy(clustering_analysis_data) %>% 
+  copy(cluster_analysis_data) %>% 
   .[,map(.SD, ~ uniqueN(.x)),.SDcols = exam_table$LABNMABV] %>% 
   { names(.)[str_which(.,"1")] }
 ```
@@ -217,7 +213,7 @@ repeat {
   # Construct the correlation coefficient matrix (remove redundant variables in advance)
   cramerV_iter_dataset <- 
     if (length(redundant_iter_vars)>0) { 
-      copy(clustering_analysis_data) %>% 
+      copy(cluster_analysis_data) %>% 
         .[,.SD,.SDcols = -(redundant_iter_vars)] %>% 
         cramerV_matrix(dataset = .,
                        vars = str_subset(exam_table$LABNMABV,
@@ -229,7 +225,7 @@ repeat {
                             negate = TRUE))
       } else { 
         
-        clustering_analysis_data[,.SD] %>% 
+        cluster_analysis_data[,.SD] %>% 
         cramerV_matrix(dataset = .,
                        vars = exam_table$LABNMABV) %>% 
         setNames(.,exam_table$LABNMABV)
@@ -268,19 +264,19 @@ print(KMO_iter_results)
 ```{r Bartlett’s test of Sphericity, warning=FALSE}
 Bart_results <- 
   cortest.bartlett(mod_cramerV_iter_dataset,
-                   # n = sqrt(nrow(clustering_analysis_data)))
-                   n = nrow(clustering_analysis_data)/100)
+                   # n = sqrt(nrow(cluster_analysis_data)))
+                   n = nrow(cluster_analysis_data)/100)
 
 print(Bart_results$p.value)
 ```
 <br/>
 
-# Data preparation for clustering analysis
+# Data preparation for cluster analysis
 ## Collect variables to be removed
 ```{r Variables to be removed}
 removed_variables <- 
   # remove variables with single unique value (all results are Normal)
-  copy(clustering_analysis_data) %>% 
+  copy(cluster_analysis_data) %>% 
   .[,map(.SD, ~ n_distinct(.x)),.SDcols = exam_table$LABNMABV] %>% 
   { names(.)[str_which(.,"1")] } %>% 
   
@@ -294,18 +290,18 @@ removed_variables <-
 ```
 <br/>
 
-## Prepare the dataset for clustering analysis 
-```{r Prepare the dataset for clustering analysis}
-clustering_analysis_ready_data <-  
-  copy(clustering_analysis_data) %>% 
+## Prepare the dataset for cluster analysis 
+```{r Prepare the dataset for cluster analysis}
+cluster_analysis_ready_data <-  
+  copy(cluster_analysis_data) %>% 
   .[,.SD,.SDcols = -c(removed_variables)] %>% 
   .[,.SD,.SDcols = -c("IDCODE","Group","AGE","SEX")]
 ```
 <br/>
 
-# Clustering analysis - by the MCA/k-means method
+# Cluster analysis - by the MCA k-means method
 ## Run the algorithm (!should test for multiple seeds)
-```{r Clustering analsyis: MCA/k-means method, warning=FALSE, message=FALSE, cache=TRUE}
+```{r Cluster analsyis: MCA/k-means method, warning=FALSE, message=FALSE, cache=TRUE}
 plan(multisession, workers = 5)
 
 alphak_vector <- 0.5
@@ -314,7 +310,7 @@ result_list_name <- paste("seed =",seed_vector)
 
 monoCTD_MCAkmeans_tune <-
   future_map(seed_vector,
-             ~ tuneclus(data = clustering_analysis_ready_data,
+             ~ tuneclus(data = cluster_analysis_ready_data,
                         nclusrange = 3:6,
                         ndimrange = 2:4,
                         criterion = "asw",
@@ -354,7 +350,7 @@ PC_data <-
   { setnames(.,c(paste("PC",seq(1,ncol(.)-1),sep = " "),"Cluster")) } %>% 
   # Add Group column
   cbind(.,
-        clustering_analysis_data) %>% 
+        cluster_analysis_data) %>% 
   # Factorise Cluster column
   .[,':=' (Cluster = factor(Cluster,
                             levels = seq(min(Cluster),max(Cluster),by = 1)),
@@ -542,18 +538,22 @@ table_one_flextable <-
 <br/>
 
 ## Table of distribution of variables within disease groups
-```{r Table of distribution of variables within disease groups, echo=FALSE,message=FALSE,results='hide'}
+```{r Table of distribution of variables within disease groups, echo=FALSE, message=FALSE, results='hide', warning=FALSE}
+if(!dir.exists("./Cluster_Analysis_files/")) {
+   dir.create("./Cluster_Analysis_files/",recursive = TRUE)
+}
+
 save_as_image(table_one_flextable,
-              path = "./Clustering_Analysis_files/Table_of_distribution_of_variables.png",
+              path = "./Cluster_Analysis_files/Table_of_distribution_of_variables.png",
               expand = 20,
               zoom = 4,
-              webshot = "webshot")
+              webshot = "webshot2")
 
 ```
 <br/>
 
 **Table 1. Demographic characteristics and proportion of abnormal result in immunomarkers between the systemic connective tissue diseases (omitted immunomarkers that were all normal for all the SCTDs)**
-![</br>**Table. Distribution of variables **</br>](./Clustering_Analysis_files/Table_of_distribution_of_variables.png)
+![</br>**Table. Distribution of variables **</br>](./Cluster_Analysis_files/Table_of_distribution_of_variables.png)
 <br/>
 
 ***
@@ -570,7 +570,7 @@ variable_list <-
 cluster_color_set <- 
   c(pal_nejm(alpha = 0.8)(n_distinct(PC_data$Cluster))[-6],"grey10")
 
-clustering_biplots <- 
+cluster_biplots <- 
   map(variable_list,
       ~ ggplot() +
           geom_point(data = PC_data[,unique(.SD),.SDcols = -c("IDCODE","SEX","AGE")],
@@ -620,16 +620,16 @@ clustering_biplots <-
 <br/>
 
 ```{r biplot by principal components - file generating, echo=FALSE}
-if(!dir.exists("./Clustering_Analysis_files/PC_biplot")) {
-   dir.create("./Clustering_Analysis_files/PC_biplot",recursive = TRUE)
+if(!dir.exists("./Cluster_Analysis_files/PC_biplot")) {
+   dir.create("./Cluster_Analysis_files/PC_biplot",recursive = TRUE)
   }
 
-walk2(clustering_biplots,
+walk2(cluster_biplots,
       map(variable_list,~ paste0(str_replace_all(.x[1],"\\`|\\s",""),
                                  "_",
                                  str_replace_all(.x[2],"\\`|\\s",""),
                                  "_result_biplot")),
-      ~ ggsave(filename = paste0("./Clustering_Analysis_files/PC_biplot/",
+      ~ ggsave(filename = paste0("./Cluster_Analysis_files/PC_biplot/",
                                  .y,
                                  ".jpeg"),
                plot = .x,
@@ -714,11 +714,11 @@ profile_by_cluster_integrated <-
 <br/>
 
 ```{r Number and proportion of case in each cluster - file generating, echo=FALSE}
-if(!dir.exists("./Clustering_Analysis_files/Cluster_profile")) {
-   dir.create("./Clustering_Analysis_files/Cluster_profile",recursive = TRUE)
+if(!dir.exists("./Cluster_Analysis_files/Cluster_profile")) {
+   dir.create("./Cluster_Analysis_files/Cluster_profile",recursive = TRUE)
   }
 
-ggsave(filename = paste0("./Clustering_Analysis_files/Cluster_profile/",
+ggsave(filename = paste0("./Cluster_Analysis_files/Cluster_profile/",
                          "profile_by_cluster_integrated",
                          ".jpeg"),
        plot = profile_by_cluster_integrated,
@@ -801,7 +801,7 @@ profile_by_group_integrated <-
 <br/>
 
 ```{r Number and proportion of case in each group - file generating, echo=FALSE} 
-ggsave(filename = paste0("./Clustering_Analysis_files/Cluster_profile/",
+ggsave(filename = paste0("./Cluster_Analysis_files/Cluster_profile/",
                          "profile_by_group_integrated",
                          ".jpeg"),
        plot = profile_by_group_integrated,
@@ -815,7 +815,7 @@ ggsave(filename = paste0("./Clustering_Analysis_files/Cluster_profile/",
 ## Combine the plots to present in a single frame - Figure 2
 ```{r Combine the plots to present in a single frame - Figure 2, message=FALSE, results='hide', warning=FALSE ,echo=FALSE}
 concatenated_clustering_results_plot <- 
-  ggarrange(clustering_biplots[[1]],
+  ggarrange(cluster_biplots[[1]],
             ggarrange(profile_by_cluster_integrated,
                       profile_by_group_integrated,
                       nrow = 2,labels = c("B","C")),
@@ -825,7 +825,7 @@ concatenated_clustering_results_plot <-
 
 
 ggexport(concatenated_clustering_results_plot,
-         filename = paste0("./Clustering_Analysis_files/Cluster_profile/",
+         filename = paste0("./Cluster_Analysis_files/Cluster_profile/",
                            "clustering_results_and_cluster_content_profile",
                            ".jpeg"),
          width = 12000,height = 8000,res = 1000,verbose = FALSE)
@@ -833,7 +833,7 @@ ggexport(concatenated_clustering_results_plot,
 ```
 <br/>
 
-![</br>**Figure 2**</br>](./Clustering_Analysis_files/Cluster_profile/clustering_results_and_cluster_content_profile.jpeg)
+![</br>**Figure 2**</br>](./Cluster_Analysis_files/Cluster_profile/clustering_results_and_cluster_content_profile.jpeg)
 **Figure 2. Diversely clustered SCTD patients based on the immunomarkers.** **(A) Clusters of the patients obtained from MCA k-means with the abnormal immunomarkers contributing to the lowest two principal components (PCs).** In Figure 2A, coloured points with disease labelled in shapes represent the patients, and the immunomarkers of abnormal result are black crosses (x) along with the names of the immunomarkers. The relative locations between a cluster’s centroid and immunomarkers suggest the tendency, compared with other clusters, of patients in a specific cluster to test abnormal for immunomarkers located nearby. For example, Cluster 3 is located near C3, C4, anti-dsDNA, anti-BMZA, and B2GP1G, suggesting patients in the cluster are more likely to test abnormal for these immunomarkers. **(B) SCTDs are grouped into six distinct clusters.** The SCTDs cases (including RA, SLE, and SS) are reassigned to six distinct clusters based on the pattern of immunomarkers. Each cluster is composed of multiple SCTDs. For example, Cluster 2 is composed of SLE, SS, and a few RA cases. The heterogeneity indicates that the cases manifest similar immunomarker pattern even they are diagnosed with different SCTD diagnoses. **(C) Heterogeneity of the SCTDs.** RA distribute predominantly only in Cluster 1. High heterogeneity is noted for SLE and SS. SS cases can manifest the immunomarker patterns of Cluster 1, 2, 4, and 5. SLE cases can be also found in Cluster 2 and 3.
 <br/>
 
@@ -957,7 +957,7 @@ profile_status_by_item_overlapped_plot <-
 <br/>
 
 ```{r Immunomarker profile by cluster overlapped - file generating, echo=FALSE}
-ggsave(filename = paste0("./Clustering_Analysis_files/Cluster_profile/",
+ggsave(filename = paste0("./Cluster_Analysis_files/Cluster_profile/",
                          "profile_status_by_item_overlapped_plot",
                          ".jpeg"),
        plot = profile_status_by_item_overlapped_plot,
@@ -1005,7 +1005,7 @@ profile_status_by_item_roseplot <-
 <br/>
 
 ```{r Immunomarker profile by cluster separated - file generating, echo=FALSE}
-ggsave(filename = paste0("./Clustering_Analysis_files/Cluster_profile/",
+ggsave(filename = paste0("./Cluster_Analysis_files/Cluster_profile/",
                          "profile_status_by_item_roseplot",
                          ".jpeg"),
        plot = profile_status_by_item_roseplot,
@@ -1103,7 +1103,7 @@ sens_spec_result_plot <-
 <br/>
 
 ```{r Sum of sensitivity and specificity result visulisation - file generating, echo=FALSE, warning=FALSE}
-ggsave(filename = paste0("./Clustering_Analysis_files/Cluster_profile/",
+ggsave(filename = paste0("./Cluster_Analysis_files/Cluster_profile/",
                          "sens_spec_result_plot",
                          ".jpeg"),
        plot = sens_spec_result_plot,
@@ -1129,7 +1129,7 @@ concatenated_immunomarkers_profile_plot <-
             ncol = 1)
 
 ggexport(concatenated_immunomarkers_profile_plot,
-         filename = paste0("./Clustering_Analysis_files/Cluster_profile/",
+         filename = paste0("./Cluster_Analysis_files/Cluster_profile/",
                            "immunomarker_profile",
                            ".jpeg"),
          width = 20000,height = 16000,res = 1200,verbose = FALSE)
@@ -1137,6 +1137,6 @@ ggexport(concatenated_immunomarkers_profile_plot,
 ```
 <br/>
 
-![</br>**Figure 3**</br>](./Clustering_Analysis_files/Cluster_profile/immunomarker_profile.jpeg)
+![</br>**Figure 3**</br>](./Cluster_Analysis_files/Cluster_profile/immunomarker_profile.jpeg)
 **Figure 3. Immunological characteristics of the clusters based on immunomarkers. (A)(B) The proportion of abnormal results in the ten immunomarkers in the clusters. (C) Diverse diagnostic performance of the immunomarkers on the diagnosis of the cluster number (1 to 6).** In Figure 3C, saturated colour segments represent sensitivity and the pale one specificity.
 <br/>

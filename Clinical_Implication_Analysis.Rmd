@@ -1,5 +1,5 @@
 ---
-title: '**Identifying heterogeneous subgroups of systemic connective tissue diseases by applying a joint dimension reduction and clustering approach to immunomarkers : a retrospective study** <br/>- clinical implications analysis'
+title: '**Identifying heterogeneous subgroups of systemic connective tissue diseases by applying a joint dimension reduction and clustering approach to immunomarkers : a retrospective study** <br/>- clinical implication analysis'
 author: |
   **Chia-Wei Chang^a,#^, Hsin-Yao Wang^b,#^, Wei-Lin Lo^c^, Wei-Ting Lin^b^, Jia-Ruei Yu^b^, Yi-Ju Tseng^a,d,\*^** <br/>
   ^a^ Department of Computer Science, National Yang Ming Chiao Tung University, Hsinchu, Taiwan <br/>
@@ -762,6 +762,12 @@ comorbidity_ICD_prevalence_byGroup_plot <-
 ```
 <br/>
 
+```{r }
+if(!dir.exists("./Clinical_Implication_Analysis_files")) {
+   dir.create("./Clinical_Implication_Analysis_files",recursive = TRUE)
+  }
+```
+
 # Combine CCS and ICD-identified comorbidity prevalence plot into uniframe
 ```{r Combine CCS and ICD-identified comorbidity prevalence plot into uniframe, message=FALSE, results='hide'}
 concatenated_comorbidity_prevalence_byGroup_plot <- 
@@ -789,7 +795,7 @@ ggexport(concatenated_comorbidity_prevalence_byGroup_plot,
 ```
 <br/>
 
-![</br>**Figure 4**</br>](./Clinical_Implications_Analysis_files/Figure4_concatenated_comorbidity_prevalence_byGroup_plot.jpeg)
+![</br>**Figure 4**</br>](./Clinical_Implication_Analysis_files/Figure4_concatenated_comorbidity_prevalence_byGroup_plot.jpeg)
 **Figure 4. The heatmaps illustrate the rates of (A) Clinical Classification Software (CCS) diagnosis groups and (B) common clinical manifestation occurrences of the systemic connective tissue diseases between clusters in each of the individual diseases. We classified all ICD codes (not limited to SCTDs related codes) into CCS single-levels diagnosis groups to identify clinically meaningful manifestations. In figure 4B, we collected, from other studies, manifestations that were commonly seen in patients with the SCTDs.**
 <br/>
 
