@@ -83,7 +83,7 @@ sapply(.cran_pkgs,
 
 <br/>
 
-## Install packages from git-hub
+## Install packages from Github
 
 ``` r
 .ghub_pkgs <- c("DHLab-TSENG/dxpr","rstudio/webshot2")
@@ -104,10 +104,6 @@ sapply(sapply(strsplit(.ghub_pkgs,"/"),`[`,2),
     ##     TRUE     TRUE
 
 <br/>
-
-------------------------------------------------------------------------
-
-# Import datasets
 
 ------------------------------------------------------------------------
 

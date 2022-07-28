@@ -117,10 +117,8 @@ sapply(sapply(strsplit(.ghub_pkgs,"/"),`[`,2),
 ```
 <br/>
 
-***
-
-# Import datasets
 ```{r Import datasets, echo=FALSE, results='hide', message=FALSE}
+# Import datasets
 raw_diagnosis_data    <- readRDS("./Dataset/D1_1_concatenated_diagnosis_data(dt_query_dx_data).rds")
 CTD_diagnosis_data    <- readRDS("./Dataset/A1_1_diagnosis_eachDate_data.rds")
 CTD_diagnosis_summary <- readRDS("./Dataset/A1_2_diagnosis_Count_eachDx_data.rds")
@@ -181,7 +179,7 @@ print(Sufficient_followup_profile)
 
 # Comorbidities identified by CCS
 ## Convert ICD into CCS, retaining data within the given time range
-```{r Convert ICD into CCS and subset data by time, cache=TRUE}
+```{r Convert ICD into CCS and subset data by time, cache=TRUE, message=FALSE, warning=FALSE, results='hide'}
 # Query CCS by Diagnosis ICD-code
 correction_table <- 
   icdDxToCCS(dxDataFile = dx_database,
@@ -320,7 +318,7 @@ correction_table_padding0or1 <-
 <br/>
 
 ## Rerun conversion from ICD to CCS using modified ICD data
-```{r Rerun the conversion from ICD to CCS with fixed ICD data, cache=TRUE}
+```{r Rerun the conversion from ICD to CCS with fixed ICD data, cache=TRUE, message=FALSE, warning=FALSE, results='hide'}
 CCSLong_follow_window_final <- 
   merge(dx_database,
         correction_table,
@@ -340,11 +338,6 @@ CCSLong_follow_window_final <-
              dateColName = IPDAT,
              isDescription = TRUE,
              icd10usingDate = "2016-01-01")
-
-copy(CCSLong_follow_window_final$groupedDT) %>% 
-  .[is.na(CCS_CATEGORY_DESCRIPTION),.N,by = "Short"] %>% 
-  .[order(-N),]
-
 
 # Extract CCS data where the original ICD-codes within given time range
 plan(multisession, workers = 5)
@@ -590,7 +583,7 @@ grepTable <-
 <br/>
 
 ## Convert ICD-code into comorbidities and check that the regex patterns correctly extract the disease groups
-```{r Convert ICD-code into comorbidities,cache=TRUE}
+```{r Convert ICD-code into comorbidities, cache=TRUE, message=FALSE, results='hide'}
 CustomGrepComorbidity <-
   map(grepTable$Group,
       ~ icdDxToCustomGrep(dxDataFile  = dx_database,
@@ -762,7 +755,7 @@ comorbidity_ICD_prevalence_byGroup_plot <-
 ```
 <br/>
 
-```{r }
+```{r echo=FALSE}
 if(!dir.exists("./Clinical_Implication_Analysis_files")) {
    dir.create("./Clinical_Implication_Analysis_files",recursive = TRUE)
   }
