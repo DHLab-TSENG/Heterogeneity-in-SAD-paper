@@ -1,5 +1,5 @@
 ---
-title: '**Identifying heterogeneous subgroups of systemic connective tissue diseases by applying a joint dimension reduction and clustering approach to immunomarkers : a retrospective study** <br/>- clustering analysis'
+title: '**Identifying heterogeneous subgroups of systemic connective tissue diseases by applying a joint dimension reduction and clustering approach to immunomarkers : a retrospective study** <br/>- cluster analysis'
 author: |
   **Chia-Wei Chang^a,#^, Hsin-Yao Wang^b,#^, Wei-Lin Lo^c^, Wei-Ting Lin^b^, Jia-Ruei Yu^b^, Yi-Ju Tseng^a,d,\*^** <br/>
   ^a^ Department of Computer Science, National Yang Ming Chiao Tung University, Hsinchu, Taiwan <br/>
