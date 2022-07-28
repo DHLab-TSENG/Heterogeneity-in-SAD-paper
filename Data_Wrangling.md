@@ -79,14 +79,6 @@ sapply(sapply(strsplit(.ghub_pkgs,"/"),`[`,2),
 
 <br/>
 
-------------------------------------------------------------------------
-
-# Import datasets
-
-## Raw data
-
-## Reference data for exams
-
 <br/>
 
 ------------------------------------------------------------------------
@@ -135,7 +127,6 @@ for (i in diag_table_name) {
 ```
 
 <br/>
-
 
 ### Assign standardised (corrected) ICD Code to a new column and subset diagnosis related datasets
 

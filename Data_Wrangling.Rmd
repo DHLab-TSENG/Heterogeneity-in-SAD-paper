@@ -99,17 +99,15 @@ sapply(sapply(strsplit(.ghub_pkgs,"/"),`[`,2),
 
 <br/>
 
-------------------------------------------------------------------------
-
+```{r Raw data, echo=FALSE}
 # Import datasets
 ## Raw data
-```{r Raw data, echo=FALSE}
 raw_dataset <- 
   readRDS("./Dataset/A1_0_dateformated_deunfixable_sex_bday_raw_dataset.rds")
 ```
 
-## Reference data for exams
-```{r Reference data, echo=FALSE}
+```{r Reference ranges, echo=FALSE}
+## Reference ranges for exam results
 exam_table <- 
   read.csv("./Dataset/exam_table.csv",stringsAsFactors = FALSE) %>% 
   setDT(.) %>% 
