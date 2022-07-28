@@ -57,7 +57,7 @@ sapply(.cran_pkgs,
     ## ggiraphExtra        ggsci      cowplot 
     ##         TRUE         TRUE         TRUE
 
-## Install packages from git-hub
+## Install packages from GitHub
 
 ``` r
 .ghub_pkgs <- c("DHLab-TSENG/dxpr")
@@ -81,7 +81,7 @@ sapply(sapply(strsplit(.ghub_pkgs,"/"),`[`,2),
 
 ------------------------------------------------------------------------
 
-# Import data sets
+# Import datasets
 
 ## Raw data
 
@@ -93,7 +93,7 @@ sapply(sapply(strsplit(.ghub_pkgs,"/"),`[`,2),
 
 # Data pre-process
 
-## Diagnosis data pre-process
+## Diagnosis data pre-process using the dxpr package
 
 ``` r
 ICD10_implt_date <- "2016-01-01"
@@ -136,107 +136,6 @@ for (i in diag_table_name) {
 
 <br/>
 
-### Summarise Top20 Error ICD
-
-``` r
-map(icd_conversion, 
-    ~ plotICDError(errorFile = .x$Error,
-                   icdVersion = all,
-                   wrongICDType = all,
-                   others = FALSE,
-                   topN = 20))
-```
-
-    ## $RSASOPDAF
-    ## $RSASOPDAF$graph
-
-![](Data_Wrangling_files/figure-gfm/Summarise%20Error%20ICD-1.png)<!-- -->
-
-    ## 
-    ## $RSASOPDAF$ICD
-    ##      ICD  count CumCountPerc IcdVersionInFile    WrongType Suggestion
-    ##  1:  585 352697          29%            ICD 9 Wrong format       5859
-    ##  2: 5640 164987       42.56%            ICD 9 Wrong format      56409
-    ##  3: 2794 147258       54.67%            ICD 9 Wrong format      27949
-    ##  4: 2740  62423        59.8%            ICD 9 Wrong format           
-    ##  5: 3000  46289       63.61%            ICD 9 Wrong format      30009
-    ##  6: 2554  42252       67.08%            ICD 9 Wrong format           
-    ##  7: 5210  34720       69.94%            ICD 9 Wrong format      52109
-    ##  8: 7805  33250       72.67%            ICD 9 Wrong format      78059
-    ##  9: M791  32608       75.35%           ICD 10 Wrong format           
-    ## 10: 7330  32187          78%            ICD 9 Wrong format      73309
-    ## 11: V048  31911       80.62%            ICD 9 Wrong format      V0489
-    ## 12: 2500  31783       83.24%            ICD 9 Wrong format           
-    ## 13: 5714  31724       85.84%            ICD 9 Wrong format      57149
-    ## 14: 5997  31312       88.42%            ICD 9 Wrong format           
-    ## 15: 5234  26682       90.61%            ICD 9 Wrong format           
-    ## 16: 6009  26107       92.76%            ICD 9 Wrong format           
-    ## 17: 5280  23012       94.65%            ICD 9 Wrong format      52809
-    ## 18: 5333  22564       96.51%            ICD 9 Wrong format           
-    ## 19: 5339  21517       98.28%            ICD 9 Wrong format           
-    ## 20: 7148  20979         100%            ICD 9 Wrong format      71489
-    ## 
-    ## 
-    ## $RSASERDAF
-    ## $RSASERDAF$graph
-
-![](Data_Wrangling_files/figure-gfm/Summarise%20Error%20ICD-2.png)<!-- -->
-
-    ## 
-    ## $RSASERDAF$ICD
-    ##      ICD count CumCountPerc IcdVersionInFile    WrongType Suggestion
-    ##  1:  389  9711       25.68%            ICD 9 Wrong format       3899
-    ##  2:  585  8581       48.37%            ICD 9 Wrong format       5859
-    ##  3: 7806  7916        69.3%            ICD 9 Wrong format           
-    ##  4: 5640  1704       73.81%            ICD 9 Wrong format      56409
-    ##  5: 7890  1550        77.9%            ICD 9 Wrong format      78909
-    ##  6:   90   951       80.42%            ICD 9 Wrong format           
-    ##  7: 2765   927       82.87%            ICD 9 Wrong format           
-    ##  8: M791   651       84.59%           ICD 10 Wrong format           
-    ##  9: 7809   641       86.29%            ICD 9 Wrong format      78099
-    ## 10: 7895   588       87.84%            ICD 9 Wrong format      78959
-    ## 11: 5350   585       89.39%            ICD 9 Wrong format           
-    ## 12: 5997   550       90.84%            ICD 9 Wrong format           
-    ## 13: 8734   529       92.24%            ICD 9 Wrong format      87349
-    ## 14: 2740   523       93.62%            ICD 9 Wrong format           
-    ## 15: 7863   476       94.88%            ICD 9 Wrong format      78639
-    ## 16: 2500   410       95.97%            ICD 9 Wrong format           
-    ## 17:  539   402       97.03%            ICD 9 Wrong format           
-    ## 18:  388   390       98.06%            ICD 9 Wrong format       3889
-    ## 19:  465   381       99.07%            ICD 9 Wrong format       4659
-    ## 20: 3000   352         100%            ICD 9 Wrong format      30009
-    ## 
-    ## 
-    ## $RSASICDSUM
-    ## $RSASICDSUM$graph
-
-![](Data_Wrangling_files/figure-gfm/Summarise%20Error%20ICD-3.png)<!-- -->
-
-    ## 
-    ## $RSASICDSUM$ICD
-    ##      ICD count CumCountPerc IcdVersionInFile    WrongType Suggestion
-    ##  1: V581  3438       10.97%            ICD 9 Wrong format           
-    ##  2:  389  3196       21.17%            ICD 9 Wrong format       3899
-    ##  3:  585  2823       30.18%            ICD 9 Wrong format       5859
-    ##  4: V451  2543        38.3%            ICD 9 Wrong format           
-    ##  5: 2740  2082       44.95%            ICD 9 Wrong format           
-    ##  6: 6000  1913       51.05%            ICD 9 Wrong format           
-    ##  7: 5640  1796       56.78%            ICD 9 Wrong format      56409
-    ##  8: 7054  1540        61.7%            ICD 9 Wrong format           
-    ##  9: 2554  1495       66.47%            ICD 9 Wrong format           
-    ## 10: 2880  1446       71.09%            ICD 9 Wrong format      28809
-    ## 11:  414  1273       75.15%            ICD 9 Wrong format       4149
-    ## 12: 7806  1233       79.08%            ICD 9 Wrong format           
-    ## 13: 2848   985       82.23%            ICD 9 Wrong format      28489
-    ## 14: 7895   960       85.29%            ICD 9 Wrong format      78959
-    ## 15: 7032   921       88.23%            ICD 9 Wrong format           
-    ## 16: 2765   852       90.95%            ICD 9 Wrong format           
-    ## 17: 2874   751       93.35%            ICD 9 Wrong format      28749
-    ## 18: 2824   741       95.71%            ICD 9 Wrong format      28249
-    ## 19: 2794   710       97.98%            ICD 9 Wrong format      27949
-    ## 20: 7070   633         100%            ICD 9 Wrong format      70709
-
-<br/>
 
 ### Assign standardised (corrected) ICD Code to a new column and subset diagnosis related datasets
 

@@ -80,7 +80,7 @@ sapply(.cran_pkgs,
 
 ```
 
-## Install packages from git-hub
+## Install packages from GitHub
 ```{r Git-hub packages}
 .ghub_pkgs <- c("DHLab-TSENG/dxpr")
 
@@ -101,7 +101,7 @@ sapply(sapply(strsplit(.ghub_pkgs,"/"),`[`,2),
 
 ------------------------------------------------------------------------
 
-# Import data sets
+# Import datasets
 ## Raw data
 ```{r Raw data, echo=FALSE}
 raw_dataset <- 
@@ -121,7 +121,7 @@ exam_table <-
 ------------------------------------------------------------------------
 
 # Data pre-process 
-## Diagnosis data pre-process
+## Diagnosis data pre-process using the dxpr package
 ```{r Diagnosis data preprocess, warning=FALSE, error=FALSE, message=FALSE, cache=TRUE}
 ICD10_implt_date <- "2016-01-01"
 diag_table_name  <- c("RSASOPDAF","RSASERDAF","RSASICDSUM")
@@ -163,16 +163,6 @@ for (i in diag_table_name) {
 ```
 <br/>
 
-### Summarise Top20 Error ICD
-```{r Summarise Error ICD, warning=FALSE}
-map(icd_conversion, 
-    ~ plotICDError(errorFile = .x$Error,
-                   icdVersion = all,
-                   wrongICDType = all,
-                   others = FALSE,
-                   topN = 20))
-```
-<br/>
 
 ### Assign standardised (corrected) ICD Code to a new column and subset diagnosis related datasets
 ```{r Standardised ICD code and diagnosis dataset subseting}
