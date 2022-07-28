@@ -11,5 +11,5 @@ Dataset/PC_data.rds
 Dataset/attr_data.rds
 Heterogeneity-in-SCTD-paper.RData
 Data_Wrangling_cache/
-Clustering_Analysis_cache/
+Cluster_Analysis_cache/
 Clinical_Implications_Analysis_cache/
