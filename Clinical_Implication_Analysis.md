@@ -185,29 +185,7 @@ correction_table <-
              icd10usingDate = "2016-01-01") %>% 
   pluck(.,"Error") %>% 
   .[Suggestion!="",unique(.SD),.SDcols = c("ICD","Suggestion")]
-```
 
-    ## Wrong ICD format: total 1232 ICD codes (the number of occurrences is in brackets)
-
-    ## c("585 (69249)", "2794 (53124)", "5640 (38385)", "2740 (12215)", "2554 (10618)", "M791 (7954)", "V048 (7924)", "3000 (7717)", "5997 (7539)", "5280 (7220)")
-
-    ##  
-
-    ## Wrong ICD version: total 48 ICD codes (the number of occurrences is in brackets)
-
-    ## c("4019 (3)", "7102 (2)", "E875 (1)", "G4700 (1)", "G720 (1)", "I129 (1)", "M87051 (1)", "N009 (1)", "N049 (1)", "N183 (1)")
-
-    ##  
-
-    ## Warning: The ICD mentioned above matches to "NA" due to the format or other
-    ## issues.
-
-    ## Warning: "Wrong ICD format" means the ICD has wrong format
-
-    ## Warning: "Wrong ICD version" means the ICD classify to wrong ICD version (cause
-    ## the "icd10usingDate" or other issues)
-
-``` r
 CCSLong_follow_window <- 
   merge(dx_database,
         correction_table,
@@ -223,29 +201,7 @@ CCSLong_follow_window <-
              dateColName = IPDAT,
              isDescription = TRUE,
              icd10usingDate = "2016-01-01")
-```
 
-    ## Wrong ICD format: total 720 ICD codes (the number of occurrences is in brackets)
-
-    ## c("2740 (12215)", "2554 (10618)", "M791 (7954)", "5997 (7539)", "2500 (5526)", "5234 (4998)", "7806 (4984)", "6009 (4743)", "6000 (4523)", "5339 (4209)")
-
-    ##  
-
-    ## Wrong ICD version: total 51 ICD codes (the number of occurrences is in brackets)
-
-    ## c("4019 (3)", "7102 (2)", "E875 (1)", "G4700 (1)", "G720 (1)", "I129 (1)", "M87051 (1)", "N009 (1)", "N049 (1)", "N183 (1)")
-
-    ##  
-
-    ## Warning: The ICD mentioned above matches to "NA" due to the format or other
-    ## issues.
-
-    ## Warning: "Wrong ICD format" means the ICD has wrong format
-
-    ## Warning: "Wrong ICD version" means the ICD classify to wrong ICD version (cause
-    ## the "icd10usingDate" or other issues)
-
-``` r
 # Extract CCS data where the original ICD-codes within given time range
 plan(multisession, workers = 5)
 
@@ -382,106 +338,7 @@ CCSLong_follow_window_final <-
              dateColName = IPDAT,
              isDescription = TRUE,
              icd10usingDate = "2016-01-01")
-```
 
-    ## Wrong ICD format: total 271 ICD codes (the number of occurrences is in brackets)
-
-    ## c("2740 (12215)", "2554 (10618)", "M791 (7954)", "5997 (7539)", "5234 (4998)", "6009 (4743)", "6000 (4523)", "E784 (3987)", "E780 (3549)", "K0532 (2496)")
-
-    ##  
-
-    ## Wrong ICD version: total 54 ICD codes (the number of occurrences is in brackets)
-
-    ## c("E8750 (637)", "4019 (3)", "7102 (2)", "G4700 (1)", "G720 (1)", "I129 (1)", "M87051 (1)", "N009 (1)", "N049 (1)", "N183 (1)")
-
-    ##  
-
-    ## Warning: The ICD mentioned above matches to "NA" due to the format or other
-    ## issues.
-
-    ## Warning: "Wrong ICD format" means the ICD has wrong format
-
-    ## Warning: "Wrong ICD version" means the ICD classify to wrong ICD version (cause
-    ## the "icd10usingDate" or other issues)
-
-``` r
-copy(CCSLong_follow_window_final$groupedDT) %>% 
-  .[is.na(CCS_CATEGORY_DESCRIPTION),.N,by = "Short"] %>% 
-  .[order(-N),]
-```
-
-    ##       Short   N
-    ##  1:   E8750 637
-    ##  2: I600004  62
-    ##  3:     119  44
-    ##  4: I600003  43
-    ##  5: U000REH  39
-    ##  6: I600002  38
-    ##  7:     408  33
-    ##  8: I600005  27
-    ##  9: I600001  20
-    ## 10: I600000  17
-    ## 11:     544  13
-    ## 12:    4019   3
-    ## 13:   51885   3
-    ## 14:     547   3
-    ## 15:   95999   3
-    ## 16:    7102   2
-    ## 17:   01101   1
-    ## 18:   01104   1
-    ## 19:   01105   1
-    ## 20:   27739   1
-    ## 21:    2859   1
-    ## 22:    2875   1
-    ## 23:    3314   1
-    ## 24:   34290   1
-    ## 25:   35800   1
-    ## 26:   40391   1
-    ## 27:   40599   1
-    ## 28:    4139   1
-    ## 29:    4168   1
-    ## 30:    4289   1
-    ## 31:    0431   1
-    ## 32:    4321   1
-    ## 33:   43491   1
-    ## 34:    4476   1
-    ## 35:     486   1
-    ## 36:    5270   1
-    ## 37:    5275   1
-    ## 38:   53081   1
-    ## 39:   53490   1
-    ## 40:   55092   1
-    ## 41:    5722   1
-    ## 42:   57491   1
-    ## 43:    5761   1
-    ## 44:   58181   1
-    ## 45:   58381   1
-    ## 46:    5859   1
-    ## 47:    5990   1
-    ## 48:   07032   1
-    ## 49:    7100   1
-    ## 50:    7138   1
-    ## 51:    7140   1
-    ## 52:   72982   1
-    ## 53:   78060   1
-    ## 54:    7864   1
-    ## 55:   99656   1
-    ## 56:   G4700   1
-    ## 57:    G720   1
-    ## 58:    I129   1
-    ## 59:  M87051   1
-    ## 60:    N009   1
-    ## 61:    N049   1
-    ## 62:    N183   1
-    ## 63:   V0261   1
-    ## 64:    V029   1
-    ## 65:   V1085   1
-    ## 66:   V4511   1
-    ## 67:   V4577   1
-    ## 68:   V4582   1
-    ##       Short   N
-
-``` r
 # Extract CCS data where the original ICD-codes within given time range
 plan(multisession, workers = 5)
 
@@ -754,19 +611,6 @@ CustomGrepComorbidity$groupedDT[,unique(ICD),by = "Comorbidity"] %>%
   .[order(Comorbidity,ICD)]
 ```
 
-    ##        Comorbidity    ICD
-    ##   1:      Alopecia  70400
-    ##   2:      Alopecia  70401
-    ##   3:      Alopecia  70409
-    ##   4:      Alopecia   L630
-    ##   5:      Alopecia   L631
-    ##  ---                     
-    ## 278: Xerophthalmia H04123
-    ## 279: Xerophthalmia H04129
-    ## 280: Xerophthalmia  M3501
-    ## 281:    Xerostomia   5277
-    ## 282:    Xerostomia   K117
-
 <br/>
 
 ## Retain data within the given time range
@@ -925,12 +769,6 @@ comorbidity_ICD_prevalence_byGroup_plot <-
 ```
 
 <br/>
-
-``` r
-if(!dir.exists("./Clinical_Implication_Analysis_files")) {
-   dir.create("./Clinical_Implication_Analysis_files",recursive = TRUE)
-  }
-```
 
 # Combine CCS and ICD-identified comorbidity prevalence plot into uniframe
 
