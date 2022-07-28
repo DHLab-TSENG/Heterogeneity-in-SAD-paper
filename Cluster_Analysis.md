@@ -84,7 +84,7 @@ source("./External_R_Functions/cramer'V matrix.R")
 
 <br/>
 
-## Install packages from git-hub
+## Install packages from Github
 
 ``` r
 .ghub_pkgs <- c("rstudio/webshot2")

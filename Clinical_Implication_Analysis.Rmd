@@ -99,7 +99,7 @@ sapply(.cran_pkgs,
 ```
 <br/>
 
-## Install packages from git-hub
+## Install packages from Github
 ```{r Git-hub packages, warning=FALSE, message=FALSE}
 .ghub_pkgs <- c("DHLab-TSENG/dxpr","rstudio/webshot2")
 
