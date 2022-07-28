@@ -715,7 +715,7 @@ profile_by_cluster_integrated <-
 
 ```{r Number and proportion of case in each cluster - file generating, echo=FALSE}
 if(!dir.exists("./Cluster_Analysis_files/Cluster_profile")) {
-   dir.create("./Cluster_Analysis_files/Cluster_profile",recursive = TRUE)
+   dir.create("./Cluster_Analysis_files/Cluster_profile", recursive = TRUE)
   }
 
 ggsave(filename = paste0("./Cluster_Analysis_files/Cluster_profile/",

@@ -311,7 +311,7 @@ cluster_analysis_ready_data <-
 
 <br/>
 
-# Cluster analysis - by the MCA/k-means method
+# Cluster analysis - by the MCA k-means method
 
 ## Run the algorithm (!should test for multiple seeds)
 
