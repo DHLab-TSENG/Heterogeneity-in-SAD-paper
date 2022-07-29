@@ -102,7 +102,7 @@ source("./External_R_Functions/cramer'V matrix.R")
 ```
 <br/>
 
-## Install packages from Github
+## Install packages from GitHub
 ```{r Git-hub packages, warning=FALSE, message=FALSE, eval=TRUE}
 .ghub_pkgs <- c("rstudio/webshot2")
 
@@ -123,7 +123,7 @@ sapply(sapply(strsplit(.ghub_pkgs,"/"),`[`,2),
 ***
 
 # Import datasets
-## monoCTD ready analysis dataset
+## Analysis-ready dataset
 ```{r monoCTD dataset, echo=FALSE}
 monoCTD_dataset <- 
   readRDS("./Dataset/A5_monoCTD_ready_analysis_dataset.rds") %>%
@@ -184,7 +184,7 @@ cluster_analysis_data <-
 ```
 <br/>
 
-## Subset for selected diseases
+## Subset for selected SCTDs
 ```{r Subset for selected diseases}
 cluster_analysis_data <- 
   cluster_analysis_data[Group %in% selected_disease_groups,]
@@ -192,7 +192,7 @@ cluster_analysis_data <-
 ```
 <br/>
 
-## Remove variables with single unique value (no information; all Normal)
+## Remove variables with single unique value (no information or all Normal)
 ```{r Remove variables without information}
 redundant_vars <- 
   copy(cluster_analysis_data) %>% 
@@ -260,7 +260,7 @@ print(KMO_iter_results)
 ```
 <br/>
 
-## Test to check whether the correlation matrix is an identity matrix by Bartlett’s test of Sphericity
+## Check whether the correlation matrix is an identity matrix by Bartlett’s test of Sphericity
 ```{r Bartlett’s test of Sphericity, warning=FALSE}
 Bart_results <- 
   cortest.bartlett(mod_cramerV_iter_dataset,
@@ -272,7 +272,7 @@ print(Bart_results$p.value)
 <br/>
 
 # Data preparation for cluster analysis
-## Collect variables to be removed
+## Define variables to be removed from analysis
 ```{r Variables to be removed}
 removed_variables <- 
   # remove variables with single unique value (all results are Normal)
@@ -382,7 +382,7 @@ saveRDS(attr_data,"./Dataset/attr_data.rds")
 
 ```
 
-## Prepare for tabulating distribution of variables within disease groups
+## Prepare for tabulating distribution of variables within SCTDs groups
 ```{r Prepare for tabulating distributions}
 auto_antibody_string <- unique(sapply(str_split(attr_data$Attr_mdf,"_"),`[`,2))
 
@@ -441,7 +441,7 @@ table_one_continuous_var <-
         by.y = "Variable")
   
 
-# statistics calculations for categorical variables by disease group
+# statistics calculations for categorical variables by SCTDs group
 table_one_categorical_var <- 
   # extract desired statistics and merge them into one data.table by disease group
   map(table_one_by_diseases$CatTable,
@@ -467,7 +467,7 @@ table_one_categorical_var <-
 ```
 <br/>
 
-## Generate the table of distribution of variables within disease groups
+## Generate the table of distribution of variables within SCTDs groups
 ```{r Generate the table of distribution of variables}
 # Create customised column title
 table_lable <- 
@@ -537,7 +537,7 @@ table_one_flextable <-
 ```
 <br/>
 
-## Table of distribution of variables within disease groups
+## Table of distribution of variables within SCTDs groups
 ```{r Table of distribution of variables within disease groups, echo=FALSE, message=FALSE, results='hide', warning=FALSE}
 if(!dir.exists("./Cluster_Analysis_files/")) {
    dir.create("./Cluster_Analysis_files/",recursive = TRUE)
@@ -642,7 +642,7 @@ walk2(cluster_biplots,
 <br/>
 
 
-## Profile the number and proportion of case in each cluster
+## Profile the number and proportion of cases in each cluster
 ```{r Number and proportion of case in each cluster}
 cluster_size_string <- 
   copy(PC_data) %>% 
@@ -729,7 +729,7 @@ ggsave(filename = paste0("./Cluster_Analysis_files/Cluster_profile/",
 ```
 <br/>
 
-## Profile the number and proportion of case in each group
+## Profile the number and proportion of case in each SCTD group
 ```{r Number and proportion of case in each group}
 cluster_size_string <- 
   copy(PC_data) %>% 
