@@ -84,7 +84,7 @@ source("./External_R_Functions/cramer'V matrix.R")
 
 <br/>
 
-## Install packages from Github
+## Install packages from GitHub
 
 ``` r
 .ghub_pkgs <- c("rstudio/webshot2")
@@ -110,7 +110,7 @@ sapply(sapply(strsplit(.ghub_pkgs,"/"),`[`,2),
 
 # Import datasets
 
-## monoCTD ready analysis dataset
+## Analysis-ready dataset
 
 ## Query table for exam items
 
@@ -167,7 +167,7 @@ cluster_analysis_data <-
 
 <br/>
 
-## Subset for selected diseases
+## Subset for selected SCTDs
 
 ``` r
 cluster_analysis_data <- 
@@ -176,7 +176,7 @@ cluster_analysis_data <-
 
 <br/>
 
-## Remove variables with single unique value (no information; all Normal)
+## Remove variables with single unique value (no information or all Normal)
 
 ``` r
 redundant_vars <- 
@@ -264,7 +264,7 @@ print(KMO_iter_results)
 
 <br/>
 
-## Test to check whether the correlation matrix is an identity matrix by Bartlett’s test of Sphericity
+## Check whether the correlation matrix is an identity matrix by Bartlett’s test of Sphericity
 
 ``` r
 Bart_results <- 
@@ -281,7 +281,7 @@ print(Bart_results$p.value)
 
 # Data preparation for cluster analysis
 
-## Collect variables to be removed
+## Define variables to be removed from analysis
 
 ``` r
 removed_variables <- 
@@ -398,7 +398,7 @@ attr_data <-
 
 <br/>
 
-## Prepare for tabulating distribution of variables within disease groups
+## Prepare for tabulating distribution of variables within SCTDs groups
 
 ``` r
 auto_antibody_string <- unique(sapply(str_split(attr_data$Attr_mdf,"_"),`[`,2))
@@ -485,7 +485,7 @@ table_one_categorical_var <-
 
 <br/>
 
-## Generate the table of distribution of variables within disease groups
+## Generate the table of distribution of variables within SCTDs groups
 
 ``` r
 # Create customised column title
@@ -556,7 +556,7 @@ table_one_flextable <-
 
 <br/>
 
-## Table of distribution of variables within disease groups
+## Table of distribution of variables within SCTDs groups
 
 <br/>
 
@@ -635,7 +635,7 @@ cluster_biplots <-
 
 <br/>
 
-## Profile the number and proportion of case in each cluster
+## Profile the number and proportion of cases in each cluster
 
 ``` r
 cluster_size_string <- 
@@ -709,7 +709,7 @@ profile_by_cluster_integrated <-
 
 <br/>
 
-## Profile the number and proportion of case in each group
+## Profile the number and proportion of case in each SCTD group
 
 ``` r
 cluster_size_string <- 
