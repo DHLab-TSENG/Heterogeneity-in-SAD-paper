@@ -37,7 +37,6 @@ Corresponding Author <br/>
                 
                 "modeest",
                 "vcd",
-                # "REdaS",
                 "psych",
                 "DescTools",
                 "clustrd",
@@ -86,7 +85,7 @@ sapply(.cran_pkgs,
 ## Install packages from GitHub
 
 ``` r
-.ghub_pkgs <- c("DHLab-TSENG/dxpr","rstudio/webshot2")
+.ghub_pkgs <- c("DHLab-TSENG/dxpr")
 
 if (any(!sapply(strsplit(.ghub_pkgs,"/"),`[`,2) %in% installed.packages())){
   library(devtools)
@@ -100,8 +99,8 @@ sapply(sapply(strsplit(.ghub_pkgs,"/"),`[`,2),
        function(x) suppressPackageStartupMessages(require(x,character.only = TRUE)))
 ```
 
-    ##     dxpr webshot2 
-    ##     TRUE     TRUE
+    ## dxpr 
+    ## TRUE
 
 <br/>
 
@@ -122,6 +121,7 @@ dx_database <-
 # Extract study subjects
 CustomGrepGroup_groupedDT<- 
   CTD_diagnosis_data[ID %in% PC_data$IDCODE]
+
 # Extract study subjects
 CustomGrepGroup_summarised_groupedDT <- 
   CTD_diagnosis_summary[ID %in% PC_data$IDCODE]
@@ -141,7 +141,7 @@ CustomGrepGroup_summarised_groupedDT_sufficient_followup <-
 
 <br/>
 
-## Profile number of remaining subjects after follow-up period filter by SCTD groups
+## Profile number of remaining subjects after follow-up period filter by SCTD group
 
 ``` r
 Sufficient_followup_profile <- 
@@ -312,7 +312,7 @@ correction_table_padding0or1 <-
 
 <br/>
 
-## Rerun conversion from ICD to CCS using modified ICD data
+## Rerun conversion from ICD to CCS using modified (corrected) ICD data
 
 ``` r
 CCSLong_follow_window_final <- 
@@ -417,7 +417,7 @@ table_one_CCS <-
 
 <br/>
 
-## Prepare plot data for displaying positive rate of each CCS categories by clusters
+## Prepare plot data for displaying positive rate of each CCS category by cluster
 
 ``` r
 comorbidity_CCS_proportion_byGroup_data <- 
@@ -438,84 +438,26 @@ comorbidity_CCS_proportion_byGroup_data <-
             all.y = TRUE)
       } %>% 
     setnames(.,c("V1.x","V1.y"),c("Cluster_size","Number_of_affected")) %>% 
-    #  
+    # Frequency computations
     .[,Proportion_of_affected := round(Number_of_affected/Cluster_size,3)*100,
       by = c("Cluster","Group","Comorbidity")] %>% 
-    #
+    # Subset by variable
     .[,.SD,.SDcols = c("Cluster","Group","Comorbidity","Proportion_of_affected")] %>% 
-    #
+    # Transform dataset into wide format
     dcast.data.table(., ... ~ Cluster,value.var = "Proportion_of_affected") %>% 
     .[order(Group,-`Cluster 1`),] %>% 
     .[,Comorbidity := factor(Comorbidity,levels = unique(Comorbidity))] %>% 
-    #
+    # Split by SCTD group
     split(.,by = "Group",keep.by = FALSE) %>% 
-    #
+    # Transform format of dataset
     map(., ~ as.matrix(.x,rownames = "Comorbidity"))
-```
-
-<br/>
-
-## Visualize positive rate of each CCS categories by clusters using heatmaps
-
-``` r
-paletteLength <- 20
-mid_point <- 65
-min_value <- 0
-max_value <- 100
-Color_list <- colorRampPalette(c("darkgreen", "white", "darkgoldenrod2", "firebrick3"))(paletteLength)
-Break_list <- c(seq(min_value,mid_point,length.out = ceiling(paletteLength/2) + 1), 
-                seq(mid_point, max_value, length.out = floor(paletteLength/2) + 1)[-1] )  
-  
-bold_row_labels <- map(comorbidity_CCS_proportion_byGroup_data,
-                        ~ lapply(rownames(.x),function(x) bquote(bold(.(x))) ) )
-bold_col_labels <- map(comorbidity_CCS_proportion_byGroup_data,
-                        ~ lapply(colnames(.x),function(x) bquote(bold(.(x))) ) )
-
-comorbidity_CCS_prevalence_byGroup_plot <-
-  pmap(list(comorbidity_CCS_proportion_byGroup_data,
-            bold_row_labels,
-            bold_col_labels,
-            names(comorbidity_CCS_proportion_byGroup_data),
-            c(FALSE,FALSE,FALSE)),
-      ~ pheatmap(mat = ..1,
-                 color = Color_list,
-                 cellwidth = 6,
-                 cellheight = 6,
-                 clustering_method = "average",
-                 cluster_cols = FALSE,
-                 breaks = Break_list,
-                 fontsize = 6,
-                 legend_breaks = seq(min_value,max_value,by = paletteLength/2),
-                 legend_labels = seq(min_value,max_value,by = paletteLength/2),
-                 labels_row = as.expression(..2),
-                 labels_col = as.expression(..3),
-                 main = ifelse(..4 == "Sjogren's syndrome",
-                               paste(..4,
-                                     str_c(rep(" ",28),collapse = "")),
-                               # paste(str_c(rep(" ",85),collapse = ""),
-                               #       ..4,
-                               #       str_c(rep(" ",80),collapse = ""),
-                               #       "Rate of occurrence"),
-                               ifelse(..4 == "Rheumatoid arthritis",
-                                      paste(..4,
-                                            str_c(rep(" ",28),collapse = "")),
-                                      ifelse(..4 == "Systemic lupus erythematosus",
-                                             paste(..4,
-                                                   str_c(rep(" ",10), collapse = "")),
-                                             "")
-                                      )
-                               ),
-                 legend = ..5,
-                 silent = TRUE
-                 )
-      )
 ```
 
 <br/>
 
 ------------------------------------------------------------------------
 
-# Comorbidities identified by ICD-codes
+# Comorbidities identified by ICD-code
 
 ## Enumerate comorbilities and corresponding ICD-codes in regex forms
 
@@ -672,7 +614,7 @@ table_one_ICD <-
 
 <br/>
 
-## Prepare plot data for displaying positive rate of each ICD categories by clusters
+## Prepare plot data for displaying positive rate of each ICD category by cluster
 
 ``` r
 comorbidity_ICD_proportion_byGroup_data <- 
@@ -693,24 +635,82 @@ comorbidity_ICD_proportion_byGroup_data <-
           all.y = TRUE)
     } %>% 
   setnames(.,c("V1.x","V1.y"),c("Cluster_size","Number_of_affected")) %>% 
-  #  
+  # Frequency computations
   .[,Proportion_of_affected := round(Number_of_affected/Cluster_size,3)*100,
     by = c("Cluster","Group","Comorbidity")] %>% 
-  #
+  # Subset by variable
   .[,.SD,.SDcols = c("Cluster","Group","Comorbidity","Proportion_of_affected")] %>% 
-  #
+  # Transform dataset into wide format
   dcast.data.table(., ... ~ Cluster,value.var = "Proportion_of_affected") %>% 
   .[order(Group,-`Cluster 1`),] %>% 
   .[,Comorbidity := factor(Comorbidity,levels = unique(Comorbidity))] %>% 
-  #
+  # Split by SCTD group
   split(.,by = "Group",keep.by = FALSE) %>% 
-  #
+  # Transform format of dataset
   map(., ~ as.matrix(.x,rownames = "Comorbidity"))
 ```
 
 <br/>
 
-## Visualize positive rate of each ICD categories by clusters using heatmaps
+------------------------------------------------------------------------
+
+# Visualize positive rate of comorbidities by cluster with heatmaps
+
+## CCS categories
+
+``` r
+paletteLength <- 20
+mid_point <- 65
+min_value <- 0
+max_value <- 100
+Color_list <- colorRampPalette(c("darkgreen", "white", "darkgoldenrod2", "firebrick3"))(paletteLength)
+Break_list <- c(seq(min_value,mid_point,length.out = ceiling(paletteLength/2) + 1), 
+                seq(mid_point, max_value, length.out = floor(paletteLength/2) + 1)[-1] )  
+  
+bold_row_labels <- map(comorbidity_CCS_proportion_byGroup_data,
+                        ~ lapply(rownames(.x),function(x) bquote(bold(.(x))) ) )
+bold_col_labels <- map(comorbidity_CCS_proportion_byGroup_data,
+                        ~ lapply(colnames(.x),function(x) bquote(bold(.(x))) ) )
+
+comorbidity_CCS_prevalence_byGroup_plot <-
+  pmap(list(comorbidity_CCS_proportion_byGroup_data,
+            bold_row_labels,
+            bold_col_labels,
+            names(comorbidity_CCS_proportion_byGroup_data),
+            c(FALSE,FALSE,FALSE)),
+      ~ pheatmap(mat = ..1,
+                 color = Color_list,
+                 cellwidth = 6,
+                 cellheight = 6,
+                 clustering_method = "average",
+                 cluster_cols = FALSE,
+                 breaks = Break_list,
+                 fontsize = 6,
+                 legend_breaks = seq(min_value,max_value,by = paletteLength/2),
+                 legend_labels = seq(min_value,max_value,by = paletteLength/2),
+                 labels_row = as.expression(..2),
+                 labels_col = as.expression(..3),
+                 main = ifelse(..4 == "Sjogren's syndrome",
+                               paste(..4,
+                                     str_c(rep(" ",28),collapse = "")),
+                               ifelse(..4 == "Rheumatoid arthritis",
+                                      paste(..4,
+                                            str_c(rep(" ",28),collapse = "")),
+                                      ifelse(..4 == "Systemic lupus erythematosus",
+                                             paste(..4,
+                                                   str_c(rep(" ",10), collapse = "")),
+                                             "")
+                                      )
+                               ),
+                 legend = ..5,
+                 silent = TRUE
+                 )
+      )
+```
+
+<br/>
+
+## ICD categories
 
 ``` r
 paletteLength <- 20
@@ -766,32 +766,6 @@ comorbidity_ICD_prevalence_byGroup_plot <-
 
 <br/>
 
-# Combine CCS and ICD-identified comorbidity prevalence plot into uniframe
+## Combine heatmaps of CCS and ICD category into a uniframe[^1]
 
-``` r
-concatenated_comorbidity_prevalence_byGroup_plot <- 
-  cbind(rbind(comorbidity_CCS_prevalence_byGroup_plot[[1]]$gtable,
-              comorbidity_CCS_prevalence_byGroup_plot[[2]]$gtable,
-              comorbidity_CCS_prevalence_byGroup_plot[[3]]$gtable),
-        rbind(comorbidity_ICD_prevalence_byGroup_plot[[1]]$gtable,
-              comorbidity_ICD_prevalence_byGroup_plot[[2]]$gtable,
-              comorbidity_ICD_prevalence_byGroup_plot[[3]]$gtable)
-        ) %>% 
-  as.ggplot(.) +
-  ggtitle(paste(str_c(rep(" ",12),collapse = ""),
-                "A. broad-spectrum screening",
-                str_c(rep(" ",40),collapse = ""),
-                "B. common comorbidities",
-                collapse = "")) +
-  theme(title = element_text(size = rel(.8), face = "bold"))
-
-ggexport(concatenated_comorbidity_prevalence_byGroup_plot,
-         filename = paste0("./Clinical_Implication_Analysis_files/",
-                           "Figure4_concatenated_comorbidity_prevalence_byGroup_plot",
-                           ".jpeg"),
-         width = 8000,height = 13000,res = 1000,verbose = FALSE)
-```
-
-
-Please refere to the **Figure 4** in the manuscript.
-
+[^1]: Please refer to the manuscript for **Figure 4**.
