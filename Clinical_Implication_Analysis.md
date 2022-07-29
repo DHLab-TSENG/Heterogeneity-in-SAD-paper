@@ -83,7 +83,7 @@ sapply(.cran_pkgs,
 
 <br/>
 
-## Install packages from Github
+## Install packages from GitHub
 
 ``` r
 .ghub_pkgs <- c("DHLab-TSENG/dxpr","rstudio/webshot2")
@@ -109,7 +109,7 @@ sapply(sapply(strsplit(.ghub_pkgs,"/"),`[`,2),
 
 # Preprocess data
 
-## Import diagnosis database and its profiling datasets (remove irrelevant subjects)
+## Import diagnosis database and its profiling datasets
 
 ``` r
 dx_database <- 
@@ -141,7 +141,7 @@ CustomGrepGroup_summarised_groupedDT_sufficient_followup <-
 
 <br/>
 
-## Profile number of remaining subjects after follow-up period filter by disease groups
+## Profile number of remaining subjects after follow-up period filter by SCTD groups
 
 ``` r
 Sufficient_followup_profile <- 
@@ -213,7 +213,7 @@ plan(sequential)
 
 <br/>
 
-## Generate CCS reference database by transforming website data derived from H.CUP
+## Generate CCS reference database by transforming website data derived from HCUP
 
 ``` r
 CCS_catagories <- 
@@ -792,15 +792,6 @@ ggexport(concatenated_comorbidity_prevalence_byGroup_plot,
          width = 8000,height = 13000,res = 1000,verbose = FALSE)
 ```
 
-<br/>
 
-![</br>**Figure
-4**</br>](./Clinical_Implication_Analysis_files/Figure4_concatenated_comorbidity_prevalence_byGroup_plot.jpeg)
-**Figure 4. The heatmaps illustrate the rates of (A) Clinical
-Classification Software (CCS) diagnosis groups and (B) common clinical
-manifestation occurrences of the systemic connective tissue diseases
-between clusters in each of the individual diseases. We classified all
-ICD codes (not limited to SCTDs related codes) into CCS single-levels
-diagnosis groups to identify clinically meaningful manifestations. In
-figure 4B, we collected, from other studies, manifestations that were
-commonly seen in patients with the SCTDs.** <br/>
+Please refere to the **Figure 4** in the manuscript.
+
