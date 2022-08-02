@@ -118,6 +118,9 @@ sapply(sapply(strsplit(.ghub_pkgs,"/"),`[`,2),
 
 # Import datasets
 ## Analysis-ready dataset[^*]
+
+From [Data_Wrangling.md](https://github.com/DHLab-TSENG/Heterogeneity-in-SCTD-paper/blob/main/Data_Wrangling.md)
+
 ```{r SCTD dataset}
 monoCTD_dataset <- 
   readRDS("./Dataset/A5_monoCTD_ready_analysis_dataset.rds") %>%
