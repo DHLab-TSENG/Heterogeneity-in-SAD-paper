@@ -1126,9 +1126,8 @@ ggexport(concatenated_immunomarkers_profile_plot,
 
 ```
 <br/>
+
 Next step:
 [Clinical_Implication_Analysis.md](https://github.com/DHLab-TSENG/Heterogeneity-in-SCTD-paper/blob/main/Clinical_Implication_Analysis.md)
-
-
 
 [^3]: Please refer to the manuscript for **Figure 3**
