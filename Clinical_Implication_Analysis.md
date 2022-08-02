@@ -104,6 +104,25 @@ sapply(sapply(strsplit(.ghub_pkgs,"/"),`[`,2),
 
 <br/>
 
+# Import datasets[^1]
+
+From
+[Data_Wrangling.md](https://github.com/DHLab-TSENG/Heterogeneity-in-SCTD-paper/blob/main/Data_Wrangling.md)
+
+``` r
+raw_diagnosis_data    <- readRDS("./Dataset/D1_1_concatenated_diagnosis_data(dt_query_dx_data).rds")
+CTD_diagnosis_data    <- readRDS("./Dataset/A1_1_diagnosis_eachDate_data.rds")
+CTD_diagnosis_summary <- readRDS("./Dataset/A1_2_diagnosis_Count_eachDx_data.rds")
+```
+
+From
+[Cluster_Analysis.md](https://github.com/DHLab-TSENG/Heterogeneity-in-SCTD-paper/blob/main/Cluster_Analysis.md)
+
+``` r
+PC_data   <- readRDS("./Dataset/PC_data.rds")
+attr_data <- readRDS("./Dataset/attr_data.rds")
+```
+
 ------------------------------------------------------------------------
 
 # Preprocess data
@@ -766,6 +785,9 @@ comorbidity_ICD_prevalence_byGroup_plot <-
 
 <br/>
 
-## Combine heatmaps of CCS and ICD category into a uniframe[^1]
+## Combine heatmaps of CCS and ICD category into a uniframe[^2]
 
-[^1]: Please refer to the manuscript for **Figure 4**.
+[^1]: Data availability in this repository is restricted due to the
+    regulation of the law on the protection of patients’ data
+
+[^2]: Please refer to the manuscript for **Figure 4**.
