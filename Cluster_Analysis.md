@@ -85,6 +85,8 @@ source("./External_R_Functions/cramer'V matrix.R")
 
 ## Analysis-ready dataset[^1]
 
+From [Data_Wrangling.md](https://github.com/DHLab-TSENG/Heterogeneity-in-SCTD-paper/blob/main/Data_Wrangling.md)
+
 ``` r
 monoCTD_dataset <- 
   readRDS("./Dataset/A5_monoCTD_ready_analysis_dataset.rds") %>%
@@ -1036,6 +1038,10 @@ ggexport(concatenated_immunomarkers_profile_plot,
 ```
 
 <br/>
+
+Next step:
+[Clinical_Implication_Analysis.md](https://github.com/DHLab-TSENG/Heterogeneity-in-SCTD-paper/blob/main/Clinical_Implication_Analysis.md)
+
 
 [^1]: Data availability in this repository is restricted due to the
     regulation of the law on the protection of patients’ data
