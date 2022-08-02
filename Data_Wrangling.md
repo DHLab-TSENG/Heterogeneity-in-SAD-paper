@@ -838,7 +838,7 @@ exam_result_status_data <-
 
 # Map immunomarker data with diagnosis data
 
-## Calculate time intervals between the first diagnosis for each immunomarker test date
+## Merge immunomarker data with the diagnosis data
 
 ``` r
 # Retrieve first diagnosis date 
@@ -861,7 +861,7 @@ monoCTD_dup_exam_removed_result_status_dataset <-
 
 <br/>
 
-## Calculate time spans between the first diagnosis date and each date of the immunomarker tests then subset the data set by the specified intervals
+## Calculate time spans between first diagnosis date and each date of the immunomarker tests then map the closest one within the specified intervals
 
 ``` r
 monoCTD_first_diag_exam_span_calculation_data <-
