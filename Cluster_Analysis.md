@@ -18,7 +18,7 @@ Corresponding Author <br/>
 
 # Set up for environment
 
-## Load libraries
+## Load packages from CRAN
 
 ``` r
 .cran_pkgs <- c("data.table",
@@ -34,17 +34,14 @@ Corresponding Author <br/>
                 "devtools",
                 "knitr",
                 
-                # "mlv",
                 "modeest",
                 "vcd",
-                # "REdaS",
                 "psych",
                 "DescTools",
                 "clustrd",
                 "yardstick",
 
                 "ggplot2",
-                # "ggiraphExtra",
                 "ggsci",
                 "ggrepel",
                 "ggforce",
@@ -84,35 +81,20 @@ source("./External_R_Functions/cramer'V matrix.R")
 
 <br/>
 
-## Install packages from GitHub
+# Import datasets
+
+## Analysis-ready dataset[^1]
 
 ``` r
-.ghub_pkgs <- c("rstudio/webshot2")
-
-if (any(!sapply(strsplit(.ghub_pkgs,"/"),`[`,2) %in% installed.packages())){
-  library(devtools)
-  install_github(.ghub_pkgs[!sapply(strsplit(.ghub_pkgs,"/"),`[`,2) %in% installed.packages()],
-                 lib = Sys.getenv("R_LIBS_USER"),
-                 dependencies = TRUE,
-                 force = TRUE)
-}
-
-sapply(sapply(strsplit(.ghub_pkgs,"/"),`[`,2),
-       function(x) suppressPackageStartupMessages(require(x,character.only = TRUE)))
+monoCTD_dataset <- 
+  readRDS("./Dataset/A5_monoCTD_ready_analysis_dataset.rds") %>%
+  # Subset subjects first diagnosed between 2001 and 2016
+  .[data.table::between(year(First_diagnosis_date),lower = 2001,upper = 2016),]
 ```
-
-    ## webshot2 
-    ##     TRUE
 
 <br/>
 
-------------------------------------------------------------------------
-
-# Import datasets
-
-## Analysis-ready dataset
-
-## Query table for exam items
+## Query table for immunomarkers
 
 ``` r
 simul_classify_item <- 
@@ -121,9 +103,6 @@ simul_classify_item <-
        c("72-247","M25-150"))                  # anti-Double strand DNA antibody (anti-dsDNA)
 
 removed_items <- c("ESR","CRP","CRP-Emr")      # Remove CRP, CRP-Emr, and ESR items
-
-selected_disease_groups <- 
-  c("Sjogren's syndrome","Rheumatoid arthritis","Systemic lupus erythematosus")
 
 exam_table <- 
   fread("./Dataset/exam_table.csv") %>% 
@@ -142,7 +121,7 @@ exam_table <-
 
 # Data preparation for feature selection
 
-## Transform datset into wide format by exam items
+## Transform datset into wide format by immunomarker
 
 ``` r
 cluster_analysis_data <- 
@@ -170,6 +149,9 @@ cluster_analysis_data <-
 ## Subset for selected SCTDs
 
 ``` r
+selected_disease_groups <- 
+  c("Sjogren's syndrome","Rheumatoid arthritis","Systemic lupus erythematosus")
+
 cluster_analysis_data <- 
   cluster_analysis_data[Group %in% selected_disease_groups,]
 ```
@@ -281,7 +263,7 @@ print(Bart_results$p.value)
 
 # Data preparation for cluster analysis
 
-## Define variables to be removed from analysis
+## Specify variables to be removed
 
 ``` r
 removed_variables <- 
@@ -300,7 +282,7 @@ removed_variables <-
 
 <br/>
 
-## Prepare the dataset for cluster analysis
+## Remove the specified variables from the data set for cluster analysis
 
 ``` r
 cluster_analysis_ready_data <-  
@@ -311,15 +293,15 @@ cluster_analysis_ready_data <-
 
 <br/>
 
-# Cluster analysis - by the MCA k-means method
+# Cluster analysis
 
-## Run the algorithm (!should test for multiple seeds)
+## MCA k-means
 
 ``` r
 plan(multisession, workers = 5)
 
 alphak_vector <- 0.5
-seed_vector   <- 365 # for MAC OS: 11, 83, 365, 3155; on Linux OS, use 20211111 instead.
+seed_vector   <- 365 # for MAC OS: 365; on Linux OS, use 20211111 instead.
 result_list_name <- paste("seed =",seed_vector)
 
 monoCTD_MCAkmeans_tune <-
@@ -334,20 +316,7 @@ monoCTD_MCAkmeans_tune <-
              ) %>% 
   setNames(.,
            result_list_name)
-```
 
-    ## [1] "Running for 3 clusters and 2 dimensions..."
-    ##   |                                                                              |                                                                      |   0%  |                                                                              |=======                                                               |  10%  |                                                                              |==============                                                        |  20%  |                                                                              |=====================                                                 |  30%  |                                                                              |============================                                          |  40%  |                                                                              |===================================                                   |  50%  |                                                                              |==========================================                            |  60%  |                                                                              |=================================================                     |  70%  |                                                                              |========================================================              |  80%  |                                                                              |===============================================================       |  90%  |                                                                              |======================================================================| 100%[1] "Running for 4 clusters and 2 dimensions..."
-    ##   |                                                                              |                                                                      |   0%  |                                                                              |=======                                                               |  10%  |                                                                              |==============                                                        |  20%  |                                                                              |=====================                                                 |  30%  |                                                                              |============================                                          |  40%  |                                                                              |===================================                                   |  50%  |                                                                              |==========================================                            |  60%  |                                                                              |=================================================                     |  70%  |                                                                              |========================================================              |  80%  |                                                                              |===============================================================       |  90%  |                                                                              |======================================================================| 100%[1] "Running for 4 clusters and 3 dimensions..."
-    ##   |                                                                              |                                                                      |   0%  |                                                                              |=======                                                               |  10%  |                                                                              |==============                                                        |  20%  |                                                                              |=====================                                                 |  30%  |                                                                              |============================                                          |  40%  |                                                                              |===================================                                   |  50%  |                                                                              |==========================================                            |  60%  |                                                                              |=================================================                     |  70%  |                                                                              |========================================================              |  80%  |                                                                              |===============================================================       |  90%  |                                                                              |======================================================================| 100%[1] "Running for 5 clusters and 2 dimensions..."
-    ##   |                                                                              |                                                                      |   0%  |                                                                              |=======                                                               |  10%  |                                                                              |==============                                                        |  20%  |                                                                              |=====================                                                 |  30%  |                                                                              |============================                                          |  40%  |                                                                              |===================================                                   |  50%  |                                                                              |==========================================                            |  60%  |                                                                              |=================================================                     |  70%  |                                                                              |========================================================              |  80%  |                                                                              |===============================================================       |  90%  |                                                                              |======================================================================| 100%[1] "Running for 5 clusters and 3 dimensions..."
-    ##   |                                                                              |                                                                      |   0%  |                                                                              |=======                                                               |  10%  |                                                                              |==============                                                        |  20%  |                                                                              |=====================                                                 |  30%  |                                                                              |============================                                          |  40%  |                                                                              |===================================                                   |  50%  |                                                                              |==========================================                            |  60%  |                                                                              |=================================================                     |  70%  |                                                                              |========================================================              |  80%  |                                                                              |===============================================================       |  90%  |                                                                              |======================================================================| 100%[1] "Running for 5 clusters and 4 dimensions..."
-    ##   |                                                                              |                                                                      |   0%  |                                                                              |=======                                                               |  10%  |                                                                              |==============                                                        |  20%  |                                                                              |=====================                                                 |  30%  |                                                                              |============================                                          |  40%  |                                                                              |===================================                                   |  50%  |                                                                              |==========================================                            |  60%  |                                                                              |=================================================                     |  70%  |                                                                              |========================================================              |  80%  |                                                                              |===============================================================       |  90%  |                                                                              |======================================================================| 100%[1] "Running for 6 clusters and 2 dimensions..."
-    ##   |                                                                              |                                                                      |   0%  |                                                                              |=======                                                               |  10%  |                                                                              |==============                                                        |  20%  |                                                                              |=====================                                                 |  30%  |                                                                              |============================                                          |  40%  |                                                                              |===================================                                   |  50%  |                                                                              |==========================================                            |  60%  |                                                                              |=================================================                     |  70%  |                                                                              |========================================================              |  80%  |                                                                              |===============================================================       |  90%  |                                                                              |======================================================================| 100%[1] "Running for 6 clusters and 3 dimensions..."
-    ##   |                                                                              |                                                                      |   0%  |                                                                              |=======                                                               |  10%  |                                                                              |==============                                                        |  20%  |                                                                              |=====================                                                 |  30%  |                                                                              |============================                                          |  40%  |                                                                              |===================================                                   |  50%  |                                                                              |==========================================                            |  60%  |                                                                              |=================================================                     |  70%  |                                                                              |========================================================              |  80%  |                                                                              |===============================================================       |  90%  |                                                                              |======================================================================| 100%[1] "Running for 6 clusters and 4 dimensions..."
-    ##   |                                                                              |                                                                      |   0%  |                                                                              |=======                                                               |  10%  |                                                                              |==============                                                        |  20%  |                                                                              |=====================                                                 |  30%  |                                                                              |============================                                          |  40%  |                                                                              |===================================                                   |  50%  |                                                                              |==========================================                            |  60%  |                                                                              |=================================================                     |  70%  |                                                                              |========================================================              |  80%  |                                                                              |===============================================================       |  90%  |                                                                              |======================================================================| 100%  |                                                                              |                                                                      |   0%  |                                                                              |=======                                                               |  10%  |                                                                              |==============                                                        |  20%  |                                                                              |=====================                                                 |  30%  |                                                                              |============================                                          |  40%  |                                                                              |===================================                                   |  50%  |                                                                              |==========================================                            |  60%  |                                                                              |=================================================                     |  70%  |                                                                              |========================================================              |  80%  |                                                                              |===============================================================       |  90%  |                                                                              |======================================================================| 100%
-
-``` r
 plan(sequential)
 ```
 
@@ -355,9 +324,9 @@ plan(sequential)
 
 ------------------------------------------------------------------------
 
-# Result presentation for distribution of variables
+# Data profile for demographic and immunomarker variables
 
-## Prepare for result datasets
+## Prepare clustering result datasets to extract data for the profile
 
 ``` r
 PC_data <-
@@ -398,7 +367,7 @@ attr_data <-
 
 <br/>
 
-## Prepare for tabulating distribution of variables within SCTDs groups
+## Data preprocess
 
 ``` r
 auto_antibody_string <- unique(sapply(str_split(attr_data$Attr_mdf,"_"),`[`,2))
@@ -432,15 +401,15 @@ p_value_table <-
         .[,"p value" := ifelse(`p value`<0.001,"<0.001",sprintf("%.3f",`p value`))]) %>% 
     rbindlist(.)
 
-# statistics calculations for continuous variables by disease group
+# statistics calculations for continuous variables by SCTD group
 table_one_continuous_var <- 
-  # extract desired statistics and merge them into one data.table by disease group
+  # extract desired statistics and merge them into one data.table by SCTD group
   map(table_one_by_diseases$ContTable,
       ~ .x[,c("n","mean","sd")] %>% 
         as.data.table(x = .,keep.rownames = "Statistics") %>% 
         setnames(.,".","value")) %>% 
     rbindlist(.,use.names = TRUE,idcol = "Group") %>% 
-  # retrieve necessary data and modify values for an easy-to-read purpose
+  # retrieve data and modify values for an easy-to-read purpose
   dcast.data.table(., ... ~ Statistics,value.var = "value") %>% 
   .[,':=' (n    = comma(n),
            mean = sprintf("%.1f",mean),
@@ -458,15 +427,15 @@ table_one_continuous_var <-
         by.y = "Variable")
   
 
-# statistics calculations for categorical variables by disease group
+# statistics calculations for categorical variables by SCTD group
 table_one_categorical_var <- 
-  # extract desired statistics and merge them into one data.table by disease group
+  # extract desired statistics and merge them into one data.table by SCTD group
   map(table_one_by_diseases$CatTable,
       ~ map(.x, ~ .x[,c("level","freq","percent")]) %>% 
         rbindlist(.,idcol = "Ori_Variable")
       ) %>% 
   rbindlist(.,idcol = "Group") %>% 
-  # retrieve necessary data and modify values for an easy-to-read purpose
+  # retrieve data and modify values for an easy-to-read purpose
   .[!level %in% "N",] %>% 
   .[,':=' (freq    = as.integer(freq) %>% comma(.,accuracy = 1),
            percent = sprintf("%.2f",percent) %>% str_replace_all(.,"0.00","0"))] %>% 
@@ -485,7 +454,7 @@ table_one_categorical_var <-
 
 <br/>
 
-## Generate the table of distribution of variables within SCTDs groups
+## Generate a table for the data profile[^2]
 
 ``` r
 # Create customised column title
@@ -501,7 +470,7 @@ table_lable <-
   .[,table_lable]
 
 
-# For substituting variable abbreviations with complete names
+# For substituting immunomarker abbreviations with complete names
 var_short_names <- str_subset(table_one_categorical_var$Variable,paste(exam_table$LABNMABV,collapse = "|"))
 var_long_names  <- exam_table[order(LABNMABV),][LABNMABV %in% var_short_names,ITEM]
 
@@ -512,7 +481,7 @@ table_one_template <-
       ~ .x[is.na(Variable),Variable := Ori_Variable] %>% 
         .[,.SD,.SDcols = -c("Ori_Variable")]) %>% 
   rbindlist(.,use.names = TRUE) %>% 
-  # Group assigning
+  # Variable group assigning
     .[Variable %in% c("Age"),':=' (Variable = paste("Age",Statistics,sep = ", "),
                                    Group    = NA_character_)] %>% 
     .[Variable %in% c("Male","Female"),Group := paste("Sex",Statistics,sep = ", ")] %>% 
@@ -523,7 +492,7 @@ table_one_template <-
                                         "Auto-antibodies(= positive), n (%)",
                                         "Complement(= abnormal), n (%)"),
                        exclude = NULL)] %>% 
-  # Substitute auto-antibody variables abbreviations with complete descriptions
+  # Substitute immunomarker abbreviations with complete descriptions
     setkey(Variable) %>% 
     .[var_short_names,Variable := var_long_names] %>% 
   # For an easy-to-read purpose
@@ -556,20 +525,9 @@ table_one_flextable <-
 
 <br/>
 
-## Table of distribution of variables within SCTDs groups
-
-<br/>
-
-**Table 1. Demographic characteristics and proportion of abnormal result
-in immunomarkers between the systemic connective tissue diseases
-(omitted immunomarkers that were all normal for all the SCTDs)**
-![</br>**Table. Distribution of variables
-**</br>](./Cluster_Analysis_files/Table_of_distribution_of_variables.png)
-<br/>
-
 ------------------------------------------------------------------------
 
-# Result presentation for clustering results
+# Presentation for clustering results
 
 ## Biplot of the first and second principal components
 
@@ -781,40 +739,29 @@ profile_by_group_integrated <-
 
 <br/>
 
-<br/>
+## Combine the plots to present in a single frame - Figure 2[^3]
 
-## Combine the plots to present in a single frame - Figure 2
+``` r
+concatenated_clustering_results_plot <- 
+  ggarrange(cluster_biplots[[1]],
+            ggarrange(profile_by_cluster_integrated,
+                      profile_by_group_integrated,
+                      nrow = 2,labels = c("B","C")),
+            ncol = 2,
+            labels = c("A"),
+            widths = c(1.5,1))
 
-<br/>
 
-![</br>**Figure
-2**</br>](./Cluster_Analysis_files/Cluster_profile/clustering_results_and_cluster_content_profile.jpeg)
-**Figure 2. Diversely clustered SCTD patients based on the
-immunomarkers.** **(A) Clusters of the patients obtained from MCA
-k-means with the abnormal immunomarkers contributing to the lowest two
-principal components (PCs).** In Figure 2A, coloured points with disease
-labelled in shapes represent the patients, and the immunomarkers of
-abnormal result are black crosses (x) along with the names of the
-immunomarkers. The relative locations between a cluster’s centroid and
-immunomarkers suggest the tendency, compared with other clusters, of
-patients in a specific cluster to test abnormal for immunomarkers
-located nearby. For example, Cluster 3 is located near C3, C4,
-anti-dsDNA, anti-BMZA, and B2GP1G, suggesting patients in the cluster
-are more likely to test abnormal for these immunomarkers. **(B) SCTDs
-are grouped into six distinct clusters.** The SCTDs cases (including RA,
-SLE, and SS) are reassigned to six distinct clusters based on the
-pattern of immunomarkers. Each cluster is composed of multiple SCTDs.
-For example, Cluster 2 is composed of SLE, SS, and a few RA cases. The
-heterogeneity indicates that the cases manifest similar immunomarker
-pattern even they are diagnosed with different SCTD diagnoses. **(C)
-Heterogeneity of the SCTDs.** RA distribute predominantly only in
-Cluster 1. High heterogeneity is noted for SLE and SS. SS cases can
-manifest the immunomarker patterns of Cluster 1, 2, 4, and 5. SLE cases
-can be also found in Cluster 2 and 3. <br/>
+ggexport(concatenated_clustering_results_plot,
+         filename = paste0("./Cluster_Analysis_files/Cluster_profile/",
+                           "clustering_results_and_cluster_content_profile",
+                           ".jpeg"),
+         width = 12000,height = 8000,res = 1000,verbose = FALSE)
+```
 
-# Result presentation for immunomarker profile
+# Immunomarker profile among clusters
 
-## Profile the proportion of status in each exam item by clusters
+## Profile the proportion of status in each immunomarker by cluster
 
 ``` r
 exam_items <- attr_data[,str_replace_all(Attr_mdf,"AbN_|N_","") %>% unique(.)]
@@ -847,7 +794,7 @@ profile_status_by_item_data <-
 
 <br/>
 
-## Prepare for immunomarker profile plot data
+## Prepare plot data for immunomarker profile
 
 ``` r
 radar_plot_item_order <- 
@@ -976,9 +923,9 @@ profile_status_by_item_roseplot <-
 
 <br/>
 
-# Sum of sensitivity and specificity
+## Calculation of sensitivity and specificity for assigning to clusters
 
-## Data preps
+### Data preps
 
 ``` r
 # --------------------------------------------------------------------------------------------------------------
@@ -1038,7 +985,7 @@ sens_spec_result_data <-
 
 <br/>
 
-## Profile for the sum of sensitivity and specificity
+## Visualise the results
 
 ``` r
 sens_spec_result_plot <- 
@@ -1064,21 +1011,37 @@ sens_spec_result_plot <-
     coord_flip() }
 ```
 
-    ## Warning: Using alpha for a discrete variable is not advised.
+<br/>
+
+## Combine the plots to present in a single frame - Figure 3[^4]
+
+``` r
+concatenated_immunomarkers_profile_plot <- 
+  ggarrange(ggarrange(profile_status_by_item_roseplot,
+                      profile_status_by_item_overlapped_plot,
+                      nrow = 1, 
+                      ncol = 2,
+                      widths = c(3,2.05),
+                      labels = c("A","B")),
+            sens_spec_result_plot,
+            labels = c("","C"),
+            nrow = 2,
+            ncol = 1)
+
+ggexport(concatenated_immunomarkers_profile_plot,
+         filename = paste0("./Cluster_Analysis_files/Cluster_profile/",
+                           "immunomarker_profile",
+                           ".jpeg"),
+         width = 20000,height = 16000,res = 1200,verbose = FALSE)
+```
 
 <br/>
 
-<br/>
+[^1]: Data availability in this repository is restricted due to the
+    regulation of the law on the protection of patients’ data
 
-# Combine the plots to present in a single frame - Figure 3
+[^2]: Please refer to the manuscript for **Table 1**
 
-<br/>
+[^3]: Please refer to the manuscript for **Figure 2**
 
-![</br>**Figure
-3**</br>](./Cluster_Analysis_files/Cluster_profile/immunomarker_profile.jpeg)
-**Figure 3. Immunological characteristics of the clusters based on
-immunomarkers. (A)(B) The proportion of abnormal results in the ten
-immunomarkers in the clusters. (C) Diverse diagnostic performance of the
-immunomarkers on the diagnosis of the cluster number (1 to 6).** In
-Figure 3C, saturated colour segments represent sensitivity and the pale
-one specificity. <br/>
+[^4]: Please refer to the manuscript for **Figure 3**

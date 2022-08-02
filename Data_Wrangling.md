@@ -18,7 +18,7 @@ Corresponding Author <br/>
 
 # Set up for environment
 
-## Load libraries
+## Load packages from CRAN
 
 ``` r
 .cran_pkgs <- c("data.table",
@@ -57,7 +57,7 @@ sapply(.cran_pkgs,
     ## ggiraphExtra        ggsci      cowplot 
     ##         TRUE         TRUE         TRUE
 
-## Install packages from GitHub
+## Load packages from GitHub
 
 ``` r
 .ghub_pkgs <- c("DHLab-TSENG/dxpr")
@@ -78,6 +78,26 @@ sapply(sapply(strsplit(.ghub_pkgs,"/"),`[`,2),
     ## TRUE
 
 <br/>
+
+# Import datasets
+
+## Raw data[^1]
+
+``` r
+raw_dataset <- 
+  readRDS("./Dataset/A1_0_dateformated_deunfixable_sex_bday_raw_dataset.rds")
+```
+
+<br/>
+
+## Reference ranges for immunomarkers
+
+``` r
+exam_table <- 
+  read.csv("./Dataset/exam_table.csv",stringsAsFactors = FALSE) %>% 
+  setDT(.) %>% 
+  .[,ITEM_LABSH1IT := paste(ITEM,LABSH1IT,sep = "_")]
+```
 
 <br/>
 
@@ -128,7 +148,7 @@ for (i in diag_table_name) {
 
 <br/>
 
-### Assign standardised (corrected) ICD Code to a new column and subset diagnosis related datasets
+### Replace non-billable ICD codes with billable ICD codes
 
 ``` r
 substitute_index <-
@@ -149,7 +169,7 @@ raw_dataset_list_dx <-
 
 <br/>
 
-## Define diseases and their corresponding ICD codes (grep with short form)
+## Specify autoimmune diseases and their corresponding ICD codes
 
 ``` r
 disease_ICD_table <-
@@ -180,7 +200,7 @@ disease_ICD_table <-
 
 <br/>
 
-### Identify disease groups
+### Identify patients with the specified autoimmune diseases
 
 ``` r
 dx_data       <- rbindlist(raw_dataset_list_dx,use.name = TRUE,fill = TRUE)
@@ -201,7 +221,7 @@ CustomGrepGroup <-
 
 <br/>
 
-### Identify eligible cases for each disease with grouped ICD code
+### Identify eligible cases for each of the specified autoimmune diseases
 
 ``` r
 eligible_case_list <- 
@@ -224,7 +244,7 @@ eligible_case_list <-
 
 <br/>
 
-### Identify eligible monoCTD cases and exclude UCTD cases
+### Identify eligible cases with a single CTD over the observed courses and exclude UCTD cases
 
 ``` r
 eligible_mono_CTD_dx_dataset <- 
@@ -240,7 +260,7 @@ eligible_mono_CTD_dx_dataset <-
 
 <br/>
 
-## Pre-process for lab data - merge with DATE-related data
+## Pre-process for lab data
 
 ``` r
 # Retrieve DATE-related data from LAB-INDEX files
@@ -279,7 +299,7 @@ lab_exam_data <-
 
 <br/>
 
-## Pre-process for rheumatology and immunology reports data - merge with DATE-related data
+## Pre-process for rheumatology-immunology reports data
 
 ``` r
 rheuma_immuno_grepTable <- 
@@ -358,7 +378,7 @@ rheuma_immuno_report_data <-
 
 <br/>
 
-## Combine lab and rheumatology and immunology report data
+## Combine lab and rheumatology-immunology report data
 
 ``` r
 var_subset <- c("IDCODE","ITEM_LABSH1IT","SCDATE","LABRESUVAL")
@@ -374,9 +394,9 @@ lab_report_results <-
 
 <br/>
 
-## Determining status of lab/report reulsts using specified cut-off points
+## Determining whether a lab or rheumatology-immunology report value within a reference range (normal or abnormal)
 
-### Create a result data container for the combined lab and rheumatology and immunology report data
+### Create a data container for the combined lab and rheumatology-immunology report data
 
 ``` r
 complete_sex_bday_table <-
@@ -405,13 +425,13 @@ exam_result_dataset <-
   .[,':=' (ITEM     = str_split(ITEM_LABSH1IT,"_",n = 2,simplify = TRUE)[,1],
            LABSH1IT = str_split(ITEM_LABSH1IT,"_",n = 2,simplify = TRUE)[,2])] %>% 
   
-  # Step 4: Transform SCDATE from strings to date format
+  # Step 4: Convert SCDATE from strings to date format
   .[,SCDATE := ymd(SCDATE)]
 ```
 
 <br/>
 
-### Clean raw results of lab/report data and merge processed data with reference information
+### Clean raw results of lab and rheumatology-immunology report data then merge processed data with reference ranges
 
 ``` r
 exam_result_dataset_ori <- exam_result_dataset
@@ -428,18 +448,18 @@ UNIT_colname <- "LABVALUN"
 SEX_colname  <- "SEX"
 AGE_colname  <- "AGE"
 DATE_colname <- "SCDATE"
-
+i=exam_item[1]
 for (i in exam_item) {
   
-  ### Subset lab exam data by exam entries (ITEM_LABSH1IT) and preprocess exam values to extract pure values
+  ### Subset lab data by immunomarker (ITEM_LABSH1IT) and process raw data to extract desired part of values/strings
   exam_result_data_subset <- 
         copy(exam_result_dataset) %>% 
         
-        # Subset dataset by an experiment item name and code
+        # Subset dataset by an immunomarker and code
         .[ITEM_LABSH1IT %in% i,] %>% 
         
         .[,mdf_LABRESUVAL := LABRESUVAL] %>% 
-        # remove all space in imputed values
+        # remove all space in values
         .[str_detect(mdf_LABRESUVAL,"\\s"),mdf_LABRESUVAL := str_replace_all(mdf_LABRESUVAL,"\\s","")] %>% 
         # replace strings containing positive and negative patterns with POSITIVE and NEGATIVE
         .[str_detect(mdf_LABRESUVAL,"[Pp]ositive|POSITIVE"),mdf_LABRESUVAL := "Positive"] %>% 
@@ -450,7 +470,7 @@ for (i in exam_item) {
           str_detect(mdf_LABRESUVAL,paste0(normal_pattern,abnormal_pattern,equivocal_pattern,collapse = "|"),negate = TRUE),
           mdf_LABRESUVAL := str_replace_all(mdf_LABRESUVAL,"NA\\,|\\,NA","")] %>% 
         
-        # assign Abnormality results
+        # assign results judged by reference ranges
         .[str_detect(mdf_LABRESUVAL,normal_pattern),   final_LABRESUVAL := "Normal"] %>% 
         .[str_detect(mdf_LABRESUVAL,abnormal_pattern), final_LABRESUVAL := "Abnormal"] %>% 
         .[str_detect(mdf_LABRESUVAL,equivocal_pattern),final_LABRESUVAL := "Equivocal"] %>% 
@@ -518,11 +538,11 @@ for (i in exam_item) {
         }
     
 
-  ### Subset exam table with specified exam item
+  ### Subset reference range table with the specified immunomarker
   exam_table_subset <- exam_table[ITEM_LABSH1IT %in% i,] %>% 
                        { .[,m_index := seq(1,nrow(.)) %>% as.character(.)] }
   
-  #### Conditional on differences in unit of exam results (LABVALUN)
+  #### Conditional on differences in unit of immunomarker results (LABVALUN)
   if (exam_table[ITEM_LABSH1IT %in% i,
                  map(.SD, ~ str_detect(.x,pattern = "-",negate = TRUE) %>% sum),
                  .SDcols = indicator_vars[1]] %>% 
@@ -540,7 +560,7 @@ for (i in exam_item) {
                             paste0(AGE_colname,exam_table_subset[,Ref_AGE]),
                             sep = " & ")
   
-  ####  Conditional on differences in the year that the exam implemented (SCDATE)
+  ####  Conditional on differences in the year that the immunomarker test implemented (SCDATE)
   } else if (exam_table[ITEM_LABSH1IT %in% i,
                         map(.SD, ~ str_detect(.x,pattern = "-",negate = TRUE) %>% sum),
                         .SDcols = indicator_vars[4]] %>% 
@@ -563,7 +583,7 @@ for (i in exam_item) {
     
   }
   
-  ### Generate merging index between subset of lab exam data and exam table with subset conditions
+  ### Generate merging index between subset of immunomarker data and reference range table with subset conditions
   if(!is.null(subset_condition)) {
      merge_index <- exam_result_data_subset[,map_dfc(subset_condition, ~ { eval(parse(text=.x)) })] %>%
                     setNames(.,subset_condition) %>% setDT(.) %>% 
@@ -573,14 +593,14 @@ for (i in exam_item) {
     merge_index <- data.table(index = rep("1",nrow(exam_result_data_subset)))
     }
      
-  #### Add an index column back to lab exam data subset
+  #### Add an index column back to immunomarker data subset
   if(all(str_detect(subset_condition,"SEX|AGE"),!is.null(subset_condition))) {
     exam_result_data_subset[!is.na(SEX) & !is.na(AGE),m_index := merge_index$index %>% as.character(.)]
   } else {
     exam_result_data_subset[,m_index := merge_index$index %>% as.character(.)] 
     }
   
-  ### Merge reference values of exam results with index composition (partial)
+  ### Update reference ranges related columns by the index
   exam_result_data_subset[exam_table_subset,on = c("ITEM_LABSH1IT","m_index"),
                           ':=' (Ref_LABVALUN      = i.Ref_LABVALUN,
                                 Ref_SEX           = i.Ref_SEX,
@@ -597,7 +617,7 @@ for (i in exam_item) {
   .[ANA_mdf_LABRESUVAL != "NA",final_LABRESUVAL := ANA_mdf_LABRESUVAL] %>% 
   .[,.SD,.SDcols = c("ITEM_LABSH1IT","IDCODE",DATE_colname,"final_LABRESUVAL","ANA_mdf_LABRESUVAL",classify_vars)] %>% 
   
-  ### Merge reference values and exam results back to original dataset for all exam entries
+  ### Update reference ranges related columns of the original dataset for each immunomarker
   exam_result_dataset[.,on = c("ITEM_LABSH1IT","IDCODE",DATE_colname),
                       ':=' (final_LABRESUVAL   = i.final_LABRESUVAL,
                             ANA_mdf_LABRESUVAL = i.ANA_mdf_LABRESUVAL,
@@ -609,7 +629,7 @@ for (i in exam_item) {
                             Ref_Pos_U_Bound    = i.Ref_Pos_U_Bound,
                             non_Dich_Category  = i.non_Dich_Category)] %>% 
   
-  ### Transform "NA" into NA
+  ### Convert "NA" into NA
   { set(.,which(.[["ANA_mdf_LABRESUVAL"]]=="NA"),"ANA_mdf_LABRESUVAL",NA) } %>% 
   { set(.,which(.[["final_LABRESUVAL"]]=="NA"),"final_LABRESUVAL",NA) }
   
@@ -618,20 +638,20 @@ for (i in exam_item) {
 
 <br/>
 
-### Determine status of exam results using specified cut-off points
+### Immunomarker test result determination (Normal or Abnormal)
 
 ``` r
 exam_result_status_dataset <- 
   copy(exam_result_dataset) %>% 
   
-  # Assign status of results for those have determined
+  # Assign normal/abnormal for those have determined
   .[final_LABRESUVAL %in% c("Normal","Abnormal","Equivocal"),Status := final_LABRESUVAL] %>% 
     
-  # Create a new variable to determine status for those with multiple exam results 
+  # Create a new variable to determine normal/abnormal for those with multiple test results
   .[!is.na(final_LABRESUVAL) & is.na(Status),
     "multi_final_LABRESUVAL_list" := map(.SD, ~ as.list(str_split(.x,"\\,"))),.SDcols = "final_LABRESUVAL"] %>% 
   
-  # Status classify ---------------------------------------------------------------------------------------------------
+  # Normal/Abnormal classify ---------------------------------------------------------------------------------------------------
   ## with only negative upper bound
   .[!is.na(final_LABRESUVAL) & is.na(Status) &
     Ref_Neg_L_Bound == "-" & Ref_Neg_U_Bound != "-" & Ref_Pos_U_Bound == "-" & Ref_Pos_L_Bound == "-",
@@ -693,7 +713,7 @@ exam_result_status_dataset <-
 
 <br/>
 
-### Determine simultaneously the status for exam items with multiple test results
+### Determine Normal or Abnormal for test results of an identical immunomarker provided from both lab and report data
 
 ``` r
 simul_classify_item <- 
@@ -723,7 +743,7 @@ dup_exam_removed_result_status_dataset <-
 
 ------------------------------------------------------------------------
 
-## Combine within-seven-day exam results
+## Combine within-seven-day immunomarker results
 
 ### Create merging index
 
@@ -783,11 +803,11 @@ merge_index <-
 
 <br/>
 
-### Merge index with the original exam data to prepare final lab and report data
+### Merge the original immunomarker data with the within-seven-day index
 
 ``` r
 exam_result_status_data <- 
-  # Append grouping index to exam and report result data
+  # Append grouping index to the immunomarker data
   cbind(copy(dup_exam_removed_result_status_dataset),
         copy(merge_index) %>% .[,.SD,.SDcols = c("TIMEDIFF","INDEX")]) %>% 
   # Replace SCDATE with the earliest SCDATE within each group of INDEX 
@@ -816,9 +836,9 @@ exam_result_status_data <-
 
 ------------------------------------------------------------------------
 
-# Merge lab results with diagnosis data
+# Map immunomarker data with diagnosis data
 
-## Calculate time intervals between the first exam and the first diagnosis using raw data
+## Calculate time intervals between the first diagnosis for each immunomarker test date
 
 ``` r
 # Retrieve first diagnosis date 
@@ -828,7 +848,7 @@ monoCTD_diagnosis_query_table <-
   .[order(ID,Date,Group),head(.SD,1L),by = c("ID","Group")] %>% 
   setnames(.,"Date","First_diagnosis_date")
 
-# Merge exam result status data with monoCTD diagnosis data
+# Merge immunomarker data with the diagnosis data
 monoCTD_dup_exam_removed_result_status_dataset <- 
   copy(exam_result_status_data) %>%
   merge(.,
@@ -837,69 +857,58 @@ monoCTD_dup_exam_removed_result_status_dataset <-
         all.x = TRUE) %>% 
   ## remove exam results belong to ever-UCTD cases 
   .[!is.na(Group)]
-
-# --------------------------------------------------------------------------------------------------------------------- #
-# Calculate time intervals between the first exam and the first diagnosis using raw data
-monoCTD_first_diag_exam_span_raw_data <- 
-  copy(monoCTD_dup_exam_removed_result_status_dataset) %>% 
-  .[,first_diag_exam_span := First_diagnosis_date %--% SCDATE %>% 
-                             as.period(.,unit = "days") %>% 
-                             day(.),] %>% 
-  .[,first_diag_exam_span_abs := abs(first_diag_exam_span),] %>% 
-  .[,over_an_year := fifelse(abs(first_diag_exam_span)>=180,"Yes","No")] %>% 
-  # extract results with the minimal gap for each case and exam item
-  .[order(IDCODE,ITEM_LABSH1IT,first_diag_exam_span_abs),head(.SD,1L),by = c("IDCODE","ITEM_LABSH1IT")]
 ```
 
 <br/>
 
-## Calculate interval between first diagnosis and each exam records, and subset the data set by the specified intervals
+## Calculate time spans between the first diagnosis date and each date of the immunomarker tests then subset the data set by the specified intervals
 
 ``` r
 monoCTD_first_diag_exam_span_calculation_data <-
  copy(monoCTD_dup_exam_removed_result_status_dataset) %>%
-  # calculate intervals between first diagnosis date and sample collection date
+  # calculate time-spans between the first diagnosis date and each date of the immunomarker tests
   .[,first_diag_exam_span := First_diagnosis_date %--% SCDATE %>% 
                              as.period(.,unit = "days") %>% 
                              day(.),] %>% 
   .[,first_diag_exam_dist := first_diag_exam_span^2 + 
                              abs(first_diag_exam_span) + 
                              first_diag_exam_span] %>% 
-  # order with prioritising those with testing results than those with shorter interval
+  # sort by prioritising tests with smaller time-spans
   .[order(IDCODE,ITEM_LABSH1IT,overall_Status,first_diag_exam_dist),.SD,by = c("IDCODE","ITEM_LABSH1IT")]
 
 interval_lower_limit        <- -30
-expand_interval_lower_limit <- -90 # Sensitivity analysis c(-90,-60)
+expand_interval_lower_limit <- -90
 interval_upper_limit        <- 30
 
 monoCTD_first_diag_exam_span_within_interval_limit_imputed_data <- 
   copy(monoCTD_first_diag_exam_span_calculation_data) %>% 
   
-  # Step 0: order dataset by the variables to ensure the most recent exam results of each patients' exam items at the first row
+  # Step 0: order dataset by the variables to ensure the most recent immunomarker test at the first row
   .[order(IDCODE,ITEM_LABSH1IT,overall_Status,first_diag_exam_dist,SCDATE),] %>% 
   
-  # Step 1: identify exam results within ± 30 days of first diagnosis date, 
-  #         then assign non-NA results as imputed status values
+  # Step 1: identify immunomarker test results within ± 30 days of the first diagnosis date, 
+  #         then assign non-NA results as the final determinations
   .[!is.na(overall_Status) & 
       between(first_diag_exam_span,
               interval_lower_limit,interval_upper_limit),
     Imp_Status := overall_Status] %>% 
   
-  # Step 2: identify exam results within the range of expand lower limit and upper limit of first diagnosis date, 
-  #         then assign non-NA results as imputed status values to those are still NA after Step 1
+  # Step 2: identify immunomarker test results within the range of expand lower limit and upper limit of first diagnosis date, 
+  #         then assign non-NA results as the final determinations to those still being NA after Step 1
   .[!is.na(overall_Status) & is.na(Imp_Status) & 
       between(first_diag_exam_span,
               expand_interval_lower_limit,interval_upper_limit),
     Imp_Status := overall_Status] %>% 
   
-  # Step 3: remove all exam results out of specified range of intervals (this step would remove subjects without any results within the specified interval)
+  # Step 3: remove all immunomarker test results out of the specified range of intervals 
+  # (this step would remove patients without any results within the specified interval)
   .[between(first_diag_exam_span,
             expand_interval_lower_limit,interval_upper_limit),] %>% 
   
-  # Step 4: subset data set for first rows of each patients' each exam items
+  # Step 4: subset data set for the first rows of each immunomarker for each patient
   .[,head(.SD,1L),by = c("IDCODE","ITEM_LABSH1IT")] %>% 
   
-  # Step 5: For the patients having none of the exam results in the specified interval (disease specific), assign Abnormal
+  # Step 5: For the patients having none of the immunomarker results in the specified interval (disease-specific), assign Abnormal
   .[is.na(Imp_Status) & 
       ITEM_LABSH1IT %in% "Rheumatoid factor (RF)_72-134" & 
       Group %in% "Rheumatoid arthritis",
@@ -908,14 +917,13 @@ monoCTD_first_diag_exam_span_within_interval_limit_imputed_data <-
       ITEM_LABSH1IT %in% "Antinuclear antibody (ANA)_72-245" & 
       Group %in% c("Systemic lupus erythematosus","Sjogren's syndrome"),
     Imp_Status := "Abnormal"] %>% 
-  # Step 6: For those exam results without test results in the nearest records to
-  #         first diagnosed date, assign Normal
+  # Step 6: For those immunomarker without test results in the nearest records to the first diagnosis date, assign Normal
   .[is.na(Imp_Status),Imp_Status := "Normal"]
 ```
 
 <br/>
 
-# Prepare ready-for-analysis dataset
+# Prepare analysis-ready dataset
 
 ``` r
 selected_variables <- 
@@ -933,8 +941,5 @@ monoCTD_ready_analysis_dataset <-
 
 <br/>
 
-![</br>**Figure
-1**</br>](./Data_Wrangling_files/Figure%201.%20Eligibility%20and%20the%20number%20of%20study%20subject.jpeg)
-<br/> **Figure 1. Eligibility and the number of study subjects.**<br/>
-(RA, rheumatoid arthritis; SLE, systemic lupus erythematosus; SS,
-Sjögren’s syndrome)
+[^1]: Data availability in this repository is restricted due to the
+    regulation of the law on the protection of patients’ data
