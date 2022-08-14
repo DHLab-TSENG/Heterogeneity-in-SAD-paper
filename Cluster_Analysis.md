@@ -85,7 +85,8 @@ source("./External_R_Functions/cramer'V matrix.R")
 
 ## Analysis-ready dataset[^1]
 
-From [Data_Wrangling.md](https://github.com/DHLab-TSENG/Heterogeneity-in-SCTD-paper/blob/main/Data_Wrangling.md)
+From
+[Data_Wrangling.md](https://github.com/DHLab-TSENG/Heterogeneity-in-SCTD-paper/blob/main/Data_Wrangling.md)
 
 ``` r
 monoCTD_dataset <- 
@@ -591,6 +592,18 @@ cluster_biplots <-
       )
 ```
 
+    ## Warning: `aes_string()` was deprecated in ggplot2 3.0.0.
+    ## Please use tidy evaluation ideoms with `aes()`
+
+    ## Warning: `aes_string()` was deprecated in ggplot2 3.0.0.
+    ## Please use tidy evaluation ideoms with `aes()`
+
+    ## Warning: `aes_string()` was deprecated in ggplot2 3.0.0.
+    ## Please use tidy evaluation ideoms with `aes()`
+
+    ## Warning: `aes_string()` was deprecated in ggplot2 3.0.0.
+    ## Please use tidy evaluation ideoms with `aes()`
+
 <br/>
 
 <br/>
@@ -882,6 +895,15 @@ profile_status_by_item_overlapped_plot <-
     guides(color = guide_legend(nrow = 1,byrow = TRUE))
 ```
 
+    ## Warning: `aes_string()` was deprecated in ggplot2 3.0.0.
+    ## Please use tidy evaluation ideoms with `aes()`
+
+    ## Warning: `aes_string()` was deprecated in ggplot2 3.0.0.
+    ## Please use tidy evaluation ideoms with `aes()`
+
+    ## Warning: `aes_string()` was deprecated in ggplot2 3.0.0.
+    ## Please use tidy evaluation ideoms with `aes()`
+
 <br/>
 
 <br/>
@@ -920,6 +942,10 @@ profile_status_by_item_roseplot <-
       
   }
 ```
+
+    ## size aesthetic has been deprecated for use with lines as of ggplot2 3.4.0
+    ## ℹ Please use linewidth aesthetic instead
+    ## This message is displayed once every 8 hours.
 
 <br/>
 
@@ -1039,9 +1065,8 @@ ggexport(concatenated_immunomarkers_profile_plot,
 
 <br/>
 
-Next step:
+Next section:
 [Clinical_Implication_Analysis.md](https://github.com/DHLab-TSENG/Heterogeneity-in-SCTD-paper/blob/main/Clinical_Implication_Analysis.md)
-
 
 [^1]: Data availability in this repository is restricted due to the
     regulation of the law on the protection of patients’ data

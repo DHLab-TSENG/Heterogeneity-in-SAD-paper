@@ -937,10 +937,10 @@ monoCTD_ready_analysis_dataset <-
 
 <br/>
 
-<br/>
-
-Next step: 
+Next section:
 [Cluster_Analysis.md](https://github.com/DHLab-TSENG/Heterogeneity-in-SCTD-paper/blob/main/Cluster_Analysis.md)
+
+<br/>
 
 <br/>
 
