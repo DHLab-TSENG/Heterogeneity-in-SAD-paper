@@ -556,7 +556,7 @@ save_as_image(table_one_flextable,
 
 # Presentation for clustering results
 ## Biplot of the first and second principal components
-```{r Biplot by principal components}
+```{r Biplot by principal components, warning=FALSE, message=FALSE}
 variable_list <- 
   map(c(sum(str_detect(names(PC_data),"^PC")):2),
       ~ paste0("`","PC ",c(.x-1,.x),"`") %>% 
@@ -862,7 +862,7 @@ profile_status_by_item_data <-
 <br/>
 
 ## Prepare plot data for immunomarker profile
-```{r plot data for immunomarker profile}
+```{r plot data for immunomarker profile, warning=FALSE, message=FALSE}
 radar_plot_item_order <- 
   split(profile_status_by_item_data,by = "Cluster") %>% 
   map(., ~ .x[order(-proportion),] %>%
@@ -901,7 +901,7 @@ profile_status_by_item_plot_data <-
 <br/>
 
 ## Profile immunomarker status by cluster - overlapped
-```{r Immunomarker status by cluster - overlapped}
+```{r Immunomarker status by cluster - overlapped, warning=FALSE, message=FALSE}
 # A function for change the colour transparency of a given colour set
 t_col <- 
   function(color, percent = percent, name = NULL) {
@@ -960,7 +960,7 @@ ggsave(filename = paste0("./Cluster_Analysis_files/Cluster_profile/",
 <br/>
 
 ## Profile immunomarker status by cluster - separated
-```{r Immunomarker status by cluster - separated}
+```{r Immunomarker status by cluster - separated, warning=FALSE, message=FALSE}
 profile_status_by_item_roseplot <-
   copy(profile_status_by_item_plot_data) %>% 
   melt.data.table(data = .,

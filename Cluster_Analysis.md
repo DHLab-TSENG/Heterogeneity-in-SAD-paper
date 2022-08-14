@@ -592,18 +592,6 @@ cluster_biplots <-
       )
 ```
 
-    ## Warning: `aes_string()` was deprecated in ggplot2 3.0.0.
-    ## Please use tidy evaluation ideoms with `aes()`
-
-    ## Warning: `aes_string()` was deprecated in ggplot2 3.0.0.
-    ## Please use tidy evaluation ideoms with `aes()`
-
-    ## Warning: `aes_string()` was deprecated in ggplot2 3.0.0.
-    ## Please use tidy evaluation ideoms with `aes()`
-
-    ## Warning: `aes_string()` was deprecated in ggplot2 3.0.0.
-    ## Please use tidy evaluation ideoms with `aes()`
-
 <br/>
 
 <br/>
@@ -895,15 +883,6 @@ profile_status_by_item_overlapped_plot <-
     guides(color = guide_legend(nrow = 1,byrow = TRUE))
 ```
 
-    ## Warning: `aes_string()` was deprecated in ggplot2 3.0.0.
-    ## Please use tidy evaluation ideoms with `aes()`
-
-    ## Warning: `aes_string()` was deprecated in ggplot2 3.0.0.
-    ## Please use tidy evaluation ideoms with `aes()`
-
-    ## Warning: `aes_string()` was deprecated in ggplot2 3.0.0.
-    ## Please use tidy evaluation ideoms with `aes()`
-
 <br/>
 
 <br/>
@@ -942,10 +921,6 @@ profile_status_by_item_roseplot <-
       
   }
 ```
-
-    ## size aesthetic has been deprecated for use with lines as of ggplot2 3.4.0
-    ## ℹ Please use linewidth aesthetic instead
-    ## This message is displayed once every 8 hours.
 
 <br/>
 
