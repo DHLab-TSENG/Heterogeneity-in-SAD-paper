@@ -448,7 +448,7 @@ UNIT_colname <- "LABVALUN"
 SEX_colname  <- "SEX"
 AGE_colname  <- "AGE"
 DATE_colname <- "SCDATE"
-i=exam_item[1]
+
 for (i in exam_item) {
   
   ### Subset lab data by immunomarker (ITEM_LABSH1IT) and process raw data to extract desired part of values/strings
