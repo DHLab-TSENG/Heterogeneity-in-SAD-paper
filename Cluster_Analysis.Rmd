@@ -14,7 +14,7 @@ output:
   github_document
 ---
 
-```{css CSS settings, echo=FALSE}
+```{css CSS settings, echo=FALSE,eval=FALSE}
 h1.title {
   font-size: 28px;
   /* color: royalblue; */
@@ -50,7 +50,7 @@ h4 {
 
 # Set up for environment
 ## Load packages from CRAN
-```{r Load packages from CRAN, warning=FALSE, message=FALSE, warning=FALSE}
+```{r Load packages from CRAN, warning=FALSE, message=FALSE}
 .cran_pkgs <- c("data.table",
                 "dplyr",
                 "magrittr",

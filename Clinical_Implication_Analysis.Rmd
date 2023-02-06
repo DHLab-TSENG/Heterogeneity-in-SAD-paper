@@ -51,7 +51,7 @@ h4 {
 # Set up for environment
 ## Load libraries
 
-```{r Library, warning=FALSE, message=FALSE, warning=FALSE}
+```{r Library, warning=FALSE, message=FALSE}
 .cran_pkgs <- c("data.table",
                 "dplyr",
                 "magrittr",

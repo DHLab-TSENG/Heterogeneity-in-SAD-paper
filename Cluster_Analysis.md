@@ -17,38 +17,6 @@ Program, Boston Children’s Hospital, Boston, MA, USA <br/> <sup>\#</sup>
 Chang and Wang contribute equally to this work <br/> <sup>\*</sup>
 Corresponding Author <br/>
 
-<style type="text/css">
-h1.title {
-  font-size: 28px;
-  /* color: royalblue; */
-}
-
-h1 {
-  font-size: 28px;
-}
-
-h2 {
-  font-size: 24px;
-}
-
-h3 {
-  font-size: 20px;
-}
-
-h4 {
-  font-size: 16px;
-}
-
-<!-- code.r{ /* Code block */ -->
-<!--     font-size: 12px; -->
-<!-- } -->
-
-<!-- pre { /* Code block - determines code spacing between lines */ -->
-<!--     font-size: 14px; -->
-<!-- } -->
-
-</style>
-
 ------------------------------------------------------------------------
 
 # Set up for environment
