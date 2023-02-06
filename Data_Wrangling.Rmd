@@ -1,5 +1,5 @@
 ---
-title: '**Identifying heterogeneous subgroups of systemic connective tissue diseases by applying a joint dimension reduction and clustering approach to immunomarkers : a retrospective study** <br/>- data wrangling'
+title: '**Identifying heterogeneous subgroups of systemic autoimmune diseases by applying a joint dimension reduction and clustering approach to immunomarkers : a retrospective study** <br/>- data wrangling'
 author: |
   **Chia-Wei Chang^a,#^, Hsin-Yao Wang^b,#^, Wei-Lin Lo^c^, Wei-Ting Lin^b^, Jia-Ruei Yu^b^, Yi-Ju Tseng^a,d,\*^** <br/>
   ^a^ Department of Computer Science, National Yang Ming Chiao Tung University, Hsinchu, Taiwan <br/>
@@ -466,7 +466,7 @@ UNIT_colname <- "LABVALUN"
 SEX_colname  <- "SEX"
 AGE_colname  <- "AGE"
 DATE_colname <- "SCDATE"
-i=exam_item[1]
+
 for (i in exam_item) {
   
   ### Subset lab data by immunomarker (ITEM_LABSH1IT) and process raw data to extract desired part of values/strings
@@ -946,7 +946,7 @@ monoCTD_ready_analysis_dataset <-
 ```
 <br/>
 
-Next section: [Cluster_Analysis.md](https://github.com/DHLab-TSENG/Heterogeneity-in-SCTD-paper/blob/main/Cluster_Analysis.md)
+Next section: [Cluster_Analysis.md](https://github.com/DHLab-TSENG/Heterogeneity-in-SAD-paper/blob/main/Cluster_Analysis.md)
 
 ```{r save ready-for-analysis data, echo=FALSE}
 saveRDS(monoCTD_ready_analysis_dataset,

@@ -1,0 +1,1472 @@
+---
+title: '**Identifying heterogeneous subgroups of systemic autoimmune diseases by applying a joint dimension reduction and clustering approach to immunomarkers : a retrospective study** <br/>- analysis for validation'
+author: |
+  **Chia-Wei Chang^a,#^, Hsin-Yao Wang^b,#^, Wei-Lin Lo^c^, Wei-Ting Lin^b^, Jia-Ruei Yu^b^, Yi-Ju Tseng^a,d,\*^** <br/>
+  ^a^ Department of Computer Science, National Yang Ming Chiao Tung University, Hsinchu, Taiwan <br/>
+  ^b^ Department of Laxboratory Medicine, Chang Gung Memorial Hospital at Linkou, Taoyuan City, Taiwan <br/>
+  ^c^ Department of Rheumatology, Chang Gung Memorial Hospital at Keelung, Keelung City, Taiwan <br/>
+  ^d^ Computational Health Informatics Program, Boston Children’s Hospital, Boston, MA, USA <br/>
+  ^#^ Chang and Wang contribute equally to this work <br/>
+  ^\*^ Corresponding Author <br/>
+output:
+  github_document
+---
+
+```{css CSS settings, echo=FALSE}
+h1.title {
+  font-size: 28px;
+  /* color: royalblue; */
+}
+
+h1 {
+  font-size: 28px;
+}
+
+h2 {
+  font-size: 24px;
+}
+
+h3 {
+  font-size: 20px;
+}
+
+h4 {
+  font-size: 16px;
+}
+
+<!-- code.r{ /* Code block */ -->
+<!--     font-size: 12px; -->
+<!-- } -->
+
+<!-- pre { /* Code block - determines code spacing between lines */ -->
+<!--     font-size: 14px; -->
+<!-- } -->
+
+```
+
+***
+
+# Set up for environment
+## Load packages from CRAN
+```{r Load packages from CRAN, warning=FALSE, message=FALSE, warning=FALSE}
+.cran_pkgs <- c("data.table",
+                "dplyr",
+                "magrittr",
+                "stringr",
+                "lubridate",
+                "scales",
+                "tidyr",
+                
+                "purrr",
+                "furrr",
+                "devtools",
+                "knitr",
+                
+                "modeest",
+                "vcd",
+                "psych",
+                "DescTools",
+                "clustrd",
+                "yardstick",
+
+                "ggplot2",
+                "ggiraphExtra",
+                "ggsci",
+                "ggrepel",
+                "ggforce",
+                "ggpubr",
+                "cowplot",
+                "pheatmap",
+                "viridis",
+                "ggplotify",
+                "gtable",
+                
+                "tableone",
+                "flextable"
+                
+                )
+
+if (any(!.cran_pkgs %in% installed.packages())) {
+  install.packages(.cran_pkgs[!.cran_pkgs %in% installed.packages()],
+                   lib = Sys.getenv("R_LIBS_USER"),
+                   dependencies = TRUE)
+}
+
+sapply(.cran_pkgs,
+       function(x) suppressPackageStartupMessages(require(x,character.only = TRUE)))
+
+```
+
+## Load external functions
+```{r External functions}
+source("./External_R_Functions/ggRadar2.R")
+source("./External_R_Functions/cramer'V matrix.R")
+```
+<br/>
+
+```{r GitHub packages, warning=FALSE, message=FALSE, eval=FALSE, echo=FALSE}
+## Load packages from GitHub
+.ghub_pkgs <- c("rstudio/webshot2","DHLab-TSENG/dxpr")
+
+if (any(!sapply(strsplit(.ghub_pkgs,"/"),`[`,2) %in% installed.packages())){
+  library(devtools)
+  install_github(.ghub_pkgs[!sapply(strsplit(.ghub_pkgs,"/"),`[`,2) %in% installed.packages()],
+                 lib = Sys.getenv("R_LIBS_USER"),
+                 dependencies = TRUE,
+                 force = TRUE)
+}
+
+sapply(sapply(strsplit(.ghub_pkgs,"/"),`[`,2),
+       function(x) suppressPackageStartupMessages(require(x,character.only = TRUE)))
+
+```
+
+***
+
+# === I. Cluster analysis ===
+
+## Import datasets
+### Analysis-ready dataset
+
+From [Data_Wrangling.md](https://github.com/DHLab-TSENG/Heterogeneity-in-SAD-paper/blob/main/Data_Wrangling.md)
+
+```{r SAD dataset}
+monoCTD_dataset <- 
+  readRDS("./Dataset/A5_monoCTD_ready_analysis_dataset.rds") %>%
+  # Subset subjects first diagnosed between 2001 and 2016
+  .[data.table::between(year(First_diagnosis_date),lower = 2001,upper = 2016),]
+
+```
+<br/>
+
+[^*]: Data availability in this repository is restricted due to the regulation of the law on the protection of patients' data
+
+### Query table for immunomarkers
+```{r Query table for immunomarkers}
+simul_classify_item <- 
+  list(c("72-134","M25-238"),                  # Rheumatoid factor (RF)
+       c("72-245","72A245","72B245","72C245"), # Antinuclear antibody (ANA)
+       c("72-247","M25-150"))                  # anti-Double strand DNA antibody (anti-dsDNA)
+
+removed_items <- c("ESR","CRP","CRP-Emr")      # Remove CRP, CRP-Emr, and ESR items
+
+exam_table <- 
+  fread("./Dataset/exam_table.csv") %>% 
+  .[,ITEM_LABSH1IT := paste(ITEM,LABSH1IT,sep = "_")] %>% 
+  .[,.SD,.SDcols = c("LABIT","LABSH1IT","ITEM","ITEM_LABSH1IT","LABNMABV")] %>% 
+  # Remove redundant items in simultaneously classify items 
+  .[!LABSH1IT %in% c(map(simul_classify_item, ~ .x[-1],) %>% flatten_chr(.)),] %>% 
+  # Remove CRP, CRP-Emr, and ESR items
+  .[str_detect(ITEM,paste(removed_items,collapse = "|"),negate = TRUE),] %>% 
+  .[,unique(.SD)]
+
+```
+<br/>
+
+***
+
+## Data preparation for feature selection
+### Transform datset into wide format by immunomarker
+```{r Transform into wide format}
+cluster_analysis_data <- 
+  copy(monoCTD_dataset) %>% 
+   .[,':=' (ITEM     = str_split(ITEM_LABSH1IT,"_",simplify = TRUE)[,1],
+            LABSH1IT = str_split(ITEM_LABSH1IT,"_",simplify = TRUE)[,2])] %>% 
+   .[str_detect(ITEM,paste(removed_items,collapse = "|"),negate = TRUE),] %>% 
+   .[,Group := as.character(Group)] %>%
+   .[,.SD,.SDcols = -c("First_diagnosis_date","LABSH1IT","ITEM_LABSH1IT","SCDATE")] %>% 
+   .[,AGE := mlv(AGE,method = "mfv"),by = .(IDCODE)] %>% 
+   dcast(.,... ~ ITEM,value.var = "Imp_Status",fun.aggregate = toString,fill = "-") %>% 
+  ## Substitute complete with abbreviation
+   setnames(.,exam_table$ITEM,exam_table$LABNMABV) %>%
+  ## Preprocess for MCA-Kmeans
+   .[,c(exam_table$LABNMABV) := map(.SD, ~ str_replace_all(.x,c("Normal" = "N_","Abnormal" = "AbN_"))),
+     .SDcols = exam_table$LABNMABV] %>%
+   .[,c(exam_table$LABNMABV) := map2(.SD,exam_table$LABNMABV, ~ paste0(.x,.y)),
+     .SDcols = exam_table$LABNMABV] %>%
+   .[,c(exam_table$LABNMABV) := map(.SD, ~ factor(.x)),
+     .SDcols = exam_table$LABNMABV]
+
+```
+<br/>
+
+### Subset for selected SADs
+```{r Subset for selected SADs}
+selected_disease_groups <- 
+  c("Sjogren's syndrome","Rheumatoid arthritis","Systemic lupus erythematosus")
+
+cluster_analysis_data <- 
+  cluster_analysis_data[Group %in% selected_disease_groups,]
+
+```
+<br/>
+
+***
+
+## *Split datasets 
+```{r}
+seed <- sample.int(n = 10^5,size = 1)
+set.seed(seed)
+# 62809 (observed)
+# 98694 (7:3, observed)
+
+Dataset_A <- 
+  cluster_analysis_data %>% 
+  group_by(SEX,Group) %>% 
+  slice_sample(prop = .8)
+
+Dataset_A %>% 
+  setDT(.) %>% 
+  .[,.N,by = c("SEX","Group")] %>% 
+  .[,Prop := round(N/sum(N)*100,1)] %>% 
+  .[order(SEX,Group)] %>% 
+  rbind(.,
+        .[,t(colSums(.SD)),.SDcols = c("N","Prop")],
+        fill = TRUE) %>% 
+  .[is.na(SEX) & is.na(Group), c("SEX","Group") := "Total"] %>% 
+  .[]
+  
+
+Dataset_B <- 
+  cluster_analysis_data[!Dataset_A,]
+
+Dataset_B %>% 
+  .[,.N, by = c("SEX","Group")] %>% 
+  .[,Prop := round(N/sum(N)*100,1)] %>% 
+  .[order(SEX,Group)] %>% 
+  rbind(.,
+        .[,t(colSums(.SD)),.SDcols = c("N","Prop")],
+        fill = TRUE) %>% 
+  .[is.na(SEX) & is.na(Group), c("SEX","Group") := "Total"] %>% 
+  .[]
+
+cluster_analysis_datasets <- list(Dataset_A,Dataset_B)
+```
+<br/>
+
+### Remove variables with single unique value (no information or all Normal)
+```{r Remove variables without information}
+redundant_vars <- 
+  map(cluster_analysis_datasets,
+      ~ copy(.x) %>% 
+        .[,map(.SD, ~ uniqueN(.x)),.SDcols = exam_table$LABNMABV] %>% 
+        { names(.)[str_which(.,"1")] }
+      )
+```
+<br/>
+
+***
+
+## Feature selection
+### Kaiser–Meyer–Olkin (KMO) test for the measure of adequacy (MSA)
+```{r Feature selection by KMO test, warning = FALSE}
+MSA_cutoff  <- 0.6
+MSAi_cutoff <- 0.5
+redundant_iter_vars <- map(redundant_vars, ~ .x)
+result_list_name    <- paste("seed =",seed_vector,c("SetA","SetB"))
+
+KMO_iteration <- 
+  function(cluster_analysis_datasets = cluster_analysis_datasets,
+           redundant_iter_vars = redundant_iter_vars) {
+            
+           repeat {
+                
+                # Construct the correlation coefficient matrix (remove redundant variables in advance)
+                cramerV_iter_dataset <- 
+                  if (length(redundant_iter_vars)>0) { 
+                    copy(cluster_analysis_datasets) %>% 
+                      .[,.SD,.SDcols = -(redundant_iter_vars)] %>% 
+                      cramerV_matrix(dataset = .,
+                                     vars = str_subset(exam_table$LABNMABV,
+                                                       paste(redundant_iter_vars,collapse = "|"),
+                                                       negate = TRUE)) %>% 
+                      setNames(.,
+                               str_subset(exam_table$LABNMABV,
+                                          paste(redundant_iter_vars,collapse = "|"),
+                                          negate = TRUE))
+                    } else { 
+                      
+                      .x[,.SD] %>% 
+                      cramerV_matrix(dataset = .,
+                                     vars = exam_table$LABNMABV) %>% 
+                      setNames(.,exam_table$LABNMABV)
+                      
+                    }
+                
+                # Prepare the correlation coefficient matrix for the KMO test
+                mod_cramerV_iter_dataset <- 
+                  copy(cramerV_iter_dataset) %>% 
+                  as.data.table(.,keep.rownames = "ITEM") %>% 
+                  melt.data.table(.,id.vars = "ITEM",variable.name = "ITEM_2") %>% 
+                  .[,ITEM := factor(ITEM,levels = levels(ITEM_2))] %>% 
+                  dcast.data.table(.,... ~ ITEM_2,value.var = "value") %>% 
+                  as.matrix(.,rownames = "ITEM")
+                
+                # KMO test 
+                KMO_iter_results  <- KMO(mod_cramerV_iter_dataset)
+                
+                # iterate till overall MSA is over the specified cutoff value
+                if (KMO_iter_results$MSA>=MSA_cutoff) break
+                
+                # Find the variable with the smallest MSAi value to remove
+                min_MSAi_var <- KMO_iter_results$MSAi[KMO_iter_results$MSAi <= MSAi_cutoff] %>% 
+                                which.min(.) %>% 
+                                names(.)
+                
+                redundant_iter_vars <- append(redundant_iter_vars,min_MSAi_var)
+                
+           }
+    output <- list(KMO_iter_results,mod_cramerV_iter_dataset)
+    names(output) <- c("KMO iteration result","pruned correlation table")
+    return(output)
+  }
+
+
+KMO_iteration_results <- 
+  map2(cluster_analysis_datasets,
+       redundant_iter_vars,
+       ~ KMO_iteration(cluster_analysis_datasets = .x,
+                       redundant_iter_vars = .y)
+       ) %>% 
+  setNames(.,result_list_name)
+
+print(KMO_iteration_results)
+```
+<br/>
+
+### Check whether the correlation matrix is an identity matrix by Bartlett’s test of Sphericity
+```{r Bartlett’s test of Sphericity, warning=FALSE}
+Bart_results <- 
+  map(KMO_iteration_results,
+    ~ pluck(.x,"pruned correlation table")) %>% 
+  map(.,
+      ~ cortest.bartlett(.x,
+                         # n = sqrt(nrow(cluster_analysis_data)))
+                         n = nrow(cluster_analysis_data)/100)
+      )
+
+map(Bart_results,
+    ~ pluck(.x,"p.value")
+    )
+```
+<br/>
+
+## Data preparation for cluster analysis
+### Specify variables to be removed
+```{r Variables to be removed}
+removed_variables <- 
+  map(KMO_iteration_results,
+    ~ pluck(.x,"KMO iteration result")) %>% 
+  map2(cluster_analysis_datasets,
+       .,
+         # remove variables with single unique value (all results are Normal)
+       ~ copy(.x) %>% 
+         .[,map(.SD, ~ n_distinct(.x)),.SDcols = exam_table$LABNMABV] %>% 
+         { names(.)[str_which(.,"1")] } %>% 
+        
+         # remove variables not passing the KMO test for sampling of adequacy
+         c(.,setdiff(exam_table$LABNMABV,names(.y$MSAi))) %>% 
+         unique(.) %>%
+         # modify variable names that have been changed due to previous steps
+         str_replace_all(.,"\\.","\\-") %>% 
+         str_replace_all(.,c("DC-IgG" = "DC IgG","FLC-Kappa" = "FLC Kappa","CH50-Assay" = "CH50 Assay"))
+  )
+
+```
+<br/>
+
+### Remove the specified variables from the data set for cluster analysis 
+```{r Prepare the dataset for cluster analysis}
+cluster_analysis_ready_datasets <-  
+  map2(cluster_analysis_datasets,
+       removed_variables,
+       ~ copy(.x) %>% 
+         .[,.SD,.SDcols = -c(.y)] %>% 
+         .[,.SD,.SDcols = -c("IDCODE","Group","AGE","SEX")]
+       )
+```
+<br/>
+
+***
+
+## Cluster analysis
+### MCA k-means
+```{r Cluster analsyis using MCA k-means, warning=FALSE, message=FALSE, results = 'hide', cache=TRUE}
+plan(multisession, workers = 8)
+
+alphak_vector <- 0.5
+seed_vector   <- rep(seed,2) # for MAC OS: 365; on Linux OS, use 20211111 instead.
+
+monoCTD_MCAkmeans_tune_sets <-
+  future_map2(cluster_analysis_ready_datasets,
+              seed_vector,
+              ~ tuneclus(data = .x,
+                        # nclusrange = 3:6, 
+                        nclusrange = 6, # (force to group into 6 clusters)
+                        ndimrange = 2:4,
+                        criterion = "asw",
+                        method = "MCAK",
+                        alphak = alphak_vector,
+                        seed = .y)
+             ) %>% 
+  setNames(.,
+           result_list_name)
+
+plan(sequential)
+
+```
+<br/>
+
+```{r echo=FALSE, results='hide'}
+map(result_list_name,
+    ~ pluck(monoCTD_MCAkmeans_tune_sets,.x) %>%
+      pluck(.,"clusobjbest"))
+
+```
+<br/>
+
+***
+
+## Data profile for demographic and immunomarker variables
+### Prepare clustering result datasets to extract data for the profile
+```{r Prepare clustering result datasets}
+PC_datasets <-
+  map2(monoCTD_MCAkmeans_tune_sets,
+       cluster_analysis_datasets,
+       # Retrieve the best result object
+       ~ pluck(.x,"clusobjbest") %>% 
+         # Retrieve PC coordinate and cluster data
+         { cbind(pluck(.,"obscoord"),
+                 pluck(.,"cluster") ) } %>% 
+         as.data.table(.) %>% 
+         # Set names
+         { setnames(.,c(paste("PC",seq(1,ncol(.)-1),sep = " "),"Cluster")) } %>% 
+         # Add Group column
+         cbind(.,
+               .y) %>% 
+         # Factorise Cluster column
+         .[,':=' (Cluster = factor(Cluster,
+                                   levels = seq(min(Cluster),max(Cluster),by = 1)),
+                  Group   = factor(Group,
+                                   levels = selected_disease_groups))]
+       )
+
+
+attr_datasets <- 
+  map(monoCTD_MCAkmeans_tune_sets,
+      ~ # Retrieve best result object
+        pluck(.x,"clusobjbest") %>% 
+        # Retrieve attribute data
+        pluck(.,"attcoord") %>% 
+        as.data.table(.,keep.rownames = TRUE) %>% 
+        { setnames(.,c("Attr",paste("PC",seq(1,ncol(.)-1),sep = " "))) } %>% 
+        # Modify values in the attribute column and create the status column for plotting purposes
+        .[,Attr_mdf := str_sub(Attr,
+                               str_locate(Attr,"\\.AbN|\\.N")[,"start"]) %>% 
+                       str_replace(.,"\\.","")] %>% 
+        .[,Status   := str_split(Attr_mdf,"_",simplify = TRUE)[,1] %>% 
+                       factor(.,levels = c("N","AbN"))]
+      )
+
+```
+<br/>
+
+## Presentation for clustering results
+### Plot data preparation
+```{r}
+PC_datasets_forplots <- 
+  map(PC_datasets,
+      ~ sum(str_detect(names(.x),"^PC"))-1) %>% 
+  map2(PC_datasets,
+       .,
+       ~ rep(list(.x),.y))
+
+attr_datasets_forplots <- 
+  map(attr_datasets,
+      ~ sum(str_detect(names(.x),"^PC"))-1) %>% 
+  map2(attr_datasets,
+       .,
+       ~ rep(list(.x),.y))
+
+```
+<br/>
+
+### Biplot of the first and second principal components
+```{r Biplot by principal components, warning=FALSE, message=FALSE}
+cluster_color_set <- 
+  map(PC_datasets_forplots,
+      ~ map(.x, ~ n_distinct(.x$Cluster))
+      ) %>% 
+  map(.,
+      ~ map(.x, ~ c(pal_nejm(alpha = 0.8)(.x)[-6],"grey10"))
+      )
+
+variable_list <- 
+  map(PC_datasets,
+      ~ c(sum(str_detect(names(.x),"^PC")):2)) %>%  
+  map(.,
+      ~ map(.x, ~ paste0("`","PC ",c(.x-1,.x),"`") %>% 
+                  c(.,"Status","Attr_mdf","Cluster","Group")
+            ) %>% 
+        rev(.)
+      )
+
+cluster_biplots <- 
+  pmap(list(flatten(PC_datasets_forplots),
+            flatten(attr_datasets_forplots),
+            flatten(variable_list),
+            flatten(cluster_color_set)),
+        ~ { ggplot() +
+            geom_point(data = ..1[,unique(.SD),.SDcols = -c("IDCODE","SEX","AGE")],
+                       aes_string(x = ..3[1],y = ..3[2],color = ..3[5],shape = ..3[6]),
+                       position = position_jitter(height = 0.001,width = 0.001),
+                       size = 1.5,
+                       alpha = 0.5) +
+            geom_point(data = ..2[Status %in% c("AbN"),],
+                       aes_string(x = ..3[1],y = ..3[2]),
+                       size = 2,
+                       shape = "cross",
+                       color = "black",
+                       alpha = 0.3) +
+            geom_text_repel(data = ..2[Status %in% c("AbN"),] %>% 
+                                   .[,Attr_mdf := str_replace_all(Attr_mdf,"AbN_","")],
+                            aes_string(x = ..3[1],y = ..3[2],label = ..3[4]),
+                            size = rel(3),
+                            alpha = 0.2,
+                            min.segment.length = 5,
+                            box.padding = .3,
+                            max.overlaps = 10) +
+            geom_vline(xintercept = 0,color = "black",alpha = 0.4) +
+            geom_hline(yintercept = 0,color = "black",alpha = 0.4) +
+            geom_mark_ellipse(data = ..1[,unique(.SD),.SDcols = -c("IDCODE","SEX","AGE")],
+                              aes_string(x = ..3[1],y = ..3[2],fill = ..3[5]),color = NA,
+                              alpha = 0.2) +
+            scale_linetype_discrete(name = "Immunomaker Test Results") +
+            scale_shape_discrete(name = "SAD",
+                                 labels = map_chr(selected_disease_groups,
+                                                  ~ str_split(.x,"\\ ") %>%
+                                                    map_chr(.,~ str_sub(.x,1,1) %>% toupper(.) %>% str_flatten(.)))) +
+            scale_colour_manual(name = "Cluster",values = ..4) +
+            scale_fill_manual(name = "Cluster",values = ..4) +
+            scale_x_continuous(name = str_replace_all(..3[1],"\\`","")) +
+            scale_y_continuous(name = str_replace_all(..3[2],"\\`","")) +
+            guides(shape = guide_legend(override.aes = list(size = 2.5)),
+                   color = guide_legend(override.aes = list(size = 2.5),nrow = 1)) +
+            theme_bw() +
+            theme(axis.title.x    = element_text(face = "bold",size = rel(1),margin = margin(.5,0,0,0,"cm")),
+                  axis.title.y    = element_text(face = "bold",size = rel(1),margin = margin(0,.5,0,0,"cm")),
+                  axis.text       = element_text(face = "bold",size = rel(.9)),
+                  legend.title    = element_text(face = "bold",size = rel(1)),
+                  legend.text     = element_text(size = rel(.9)),
+                  legend.position = "bottom",
+                  legend.box.margin = margin(0,2,0,0,"cm")) 
+         }
+      )
+```
+<br/>
+
+### Profile the number and proportion of cases in each cluster
+```{r Number and proportion of case in each cluster}
+cluster_size_string <- 
+  map(PC_datasets,
+      ~ copy(.x) %>% 
+        .[,.N,by = "Cluster"] %>% 
+        .[,strings := label_comma()(N)] %>% 
+        .[order(Cluster),]
+      )
+
+profile_by_cluster_data <- 
+  map2(PC_datasets,
+       cluster_size_string,
+       ~ copy(.x) %>% 
+        .[,.N,by = c("Cluster","Group")] %>% 
+        .[order(Cluster,Group),] %>%
+        .[,Cluster_label := factor(Cluster,
+                                   levels = .y$Cluster,
+                                   labels = .y$strings)] %>% 
+        .[,Cluster_size       := sum(N),by = c("Cluster")] %>% 
+        .[,Cluster_proportion := sqrt(round(Cluster_size/sum(N),3))*0.95] %>% 
+        .[,Group_proportion   := round(N/Cluster_size,3)] %>% 
+        .[,Group_position   := cumsum(Group_proportion)-0.5*Group_proportion,by = c("Cluster")] %>% 
+        .[,Group := factor(Group,
+                           levels = selected_disease_groups,
+                           labels = map_chr(selected_disease_groups,~ str_split(.x,"\\s") %>% 
+                                                                      map_chr(., ~ str_sub(.x,1,1) %>% 
+                                                                      str_to_upper(.) %>% 
+                                                                      str_c(.,collapse = ""))))]
+      )
+
+profile_by_cluster_holistic_data <- 
+  map2(profile_by_cluster_data,
+       cluster_size_string,
+       ~ merge(.x,
+               { copy(.x) %>% 
+                 .[,unique(.SD),.SDcols = c("Cluster","Cluster_proportion")] %>% 
+                 .[,x_position := round(cumsum(Cluster_proportion/sum(Cluster_proportion))-2.2*Cluster_proportion/sum(Cluster_proportion),3)] %>%
+                 .[,.SD,.SDcols = -c("Cluster_proportion")] },
+               by = "Cluster",
+               all.x = TRUE) %>% 
+         .[,Cluster_label := factor(Cluster,
+                                    levels = sort(unique(.y$Cluster)),
+                                    labels = .y$strings)]
+       )
+
+
+profile_by_cluster_integrated <- 
+  map(profile_by_cluster_holistic_data,
+      ~ ggplot(.x,aes(width = Cluster_proportion)) +
+            geom_bar(aes(x = x_position,y = Group_proportion,fill = Group),
+                     stat = "identity",position = "stack",alpha = 0.8) +
+            scale_x_continuous(name = "Cluster\n(n)",
+                               breaks = unique(.x$x_position),
+                               labels = unique(.x$Cluster),
+                               expand = c(0.001,0.001)) +
+            scale_y_continuous(name = "Percentage",
+                               breaks = seq(0,1,by = 0.2),
+                               labels = seq(0,100,by = 20),
+                               expand = c(0,0),) +
+            scale_fill_manual(name = "CTDs",values = pal_jama()(3)) +
+            facet_grid(~ Cluster_label, space = "free_x", scales = "free_x",switch = "x") +
+            theme_bw() +
+            theme(legend.title = element_text(face = "bold",size = rel(1)),
+                  legend.text = element_text(face = "bold",size = rel(.9)),
+                  legend.position = "bottom",
+                  legend.key.size = unit(.8,"line"),
+                  axis.title.x = element_text(face = "bold",size = rel(1),margin = margin(.3,0,0,0,unit = "cm")),
+                  axis.title.y = element_text(face = "bold",size = rel(1),margin = margin(0,.3,0,0,unit = "cm")),
+                  axis.text = element_text(face = "bold",size = rel(.9)),
+                  strip.placement = "outside",
+                  strip.background = element_blank(),
+                  strip.text = element_text(face = "bold",size = rel(.6),vjust = 3.5),
+                  panel.border = element_blank()
+                  )
+      )
+
+```
+<br/>
+
+### Profile the number and proportion of case in each SAD group
+```{r Number and proportion of case in each SAD group}
+cluster_size_string <- 
+  map(PC_datasets,
+      ~ copy(.x) %>% 
+        .[,.N,by = "Group"] %>% 
+        .[order(-N),] %>% 
+        .[,Group_abr := factor(Group,
+                               levels = unique(Group),
+                               labels = map_chr(Group,~ str_split(.x,"\\s") %>% 
+                                                        map_chr(., ~ str_sub(.x,1,1) %>% 
+                                                                     str_to_upper(.) %>% 
+                                                                     str_c(.,collapse = ""))))] %>% 
+        .[,strings := label_comma()(N)]
+      )
+
+profile_by_group_data <- 
+  map2(PC_datasets,
+       cluster_size_string,
+       ~ copy(.x) %>% 
+           .[,.N,by = c("Cluster","Group")] %>% 
+           .[order(Group,-Cluster),] %>% 
+           .[,Group_label := factor(Group,
+                                    levels = .y$Group,
+                                    labels = .y$strings)] %>%
+           .[,Group_size := sum(N),by = "Group"] %>% 
+           .[,Cluster_proportion_within_group := round(N/Group_size,4)] %>% 
+           .[,Cluster_proportion_within_group_position := cumsum(Cluster_proportion_within_group)-0.5*Cluster_proportion_within_group,by = c("Group")] %>% 
+           .[,Group := factor(Group,
+                              levels = .y$Group,
+                              labels = .y$Group_abr)]
+       )
+
+profile_by_group_holistic_data <- 
+  map(profile_by_group_data,
+      ~ merge(.x,
+              { copy(.x) %>% 
+                .[,unique(.SD),.SDcols = c("Group","Group_size")] %>% 
+                .[,Group_proportion := round(Group_size/sum(Group_size),3),] %>% 
+                .[,x_position := round(cumsum(Group_proportion/sum(Group_proportion))-0.5*Group_proportion/sum(Group_proportion),3)] %>% 
+                .[,.SD,.SDcols = -c("Group_size")] },
+              by = "Group",
+              all.x = TRUE)
+      )
+
+cluster_color_set <- 
+  map(PC_datasets,
+      ~ n_distinct(.x$Cluster)
+      ) %>% 
+  map(.,
+      ~ c(pal_nejm(alpha = 0.8)(.x)[-6],"grey10")
+      )
+
+profile_by_group_integrated <- 
+  map2(profile_by_group_holistic_data,
+       cluster_color_set,
+       ~ ggplot(.x,aes(width = Group_proportion)) +
+             geom_bar(aes(x = x_position,y = Cluster_proportion_within_group,fill = Cluster),
+                      stat = "identity",position = "stack",alpha = 0.7) +
+             scale_x_continuous(name = "CTDs\n(n)",
+                                breaks = unique(.x$x_position),
+                                labels = unique(.x$Group),
+                                expand = c(0.001,0.001)) +
+             scale_y_continuous(name = "Percentage",
+                                breaks = seq(0,1,by = 0.2),
+                                labels = seq(0,100,by = 20),
+                                expand = c(0,0)) +
+             scale_fill_manual(values = .y) +
+             facet_grid(~ Group_label, space = "free_x", scales = "free_x",switch = "x") +
+             theme_bw() +
+             theme(legend.title = element_text(face = "bold",size = rel(1)),
+                   legend.text = element_text(face = "bold",size = rel(.9)),
+                   legend.position = "bottom",
+                   legend.key.size = unit(.6,"line"),
+                   axis.title.y = element_text(face = "bold",size = rel(1),margin = margin(0,.3,0,0,unit = "cm")),
+                   axis.title.x = element_text(face = "bold",size = rel(1),margin = margin(0,0,0,0,unit = "cm")),
+                   axis.text = element_text(face = "bold",size = rel(.9)),
+                   strip.placement = "outside",
+                   strip.background = element_blank(),
+                   strip.text = element_text(face = "bold",size = rel(.6),vjust = 3.5),
+                   panel.border = element_blank()
+                   ) +
+             guides(fill = guide_legend(nrow=1,byrow=TRUE))
+       ) 
+
+```
+<br/>
+
+### Combined graphs
+```{r}
+concatenated_clustering_results_plot <- 
+  pmap(list(list(pluck(cluster_biplots,1),
+                 pluck(cluster_biplots,length(cluster_biplots)-length(variable_list[[2]])+1)),
+            profile_by_cluster_integrated,
+            profile_by_group_integrated),
+        ~ ggarrange(..1,
+                    ggarrange(..2,
+                              ..3,
+                              nrow = 2,labels = c("B","C")),
+                    ncol = 2,
+                    labels = c("A"),
+                    widths = c(1.5,1))
+       ) %>% 
+  { ggarrange(.[[1]],
+              .[[2]],
+              nrow = 2,
+              labels = c(paste0(result_list_name[1]," (n = ", PC_datasets[[1]][,uniqueN(IDCODE) %>% prettyNum(.,big.mark = ",")],")"),
+                         paste0(result_list_name[2]," (n = ", PC_datasets[[2]][,uniqueN(IDCODE) %>% prettyNum(.,big.mark = ",")],")")),
+              label.x = -.05
+              )
+  }
+```
+<br/>
+
+## Immunomarker profile among clusters
+### Profile the proportion of status in each immunomarker by cluster
+```{r Proportion of status in each immunomarker by cluster}
+exam_items <- 
+  map(attr_datasets,
+      ~ .x[,str_replace_all(Attr_mdf,"AbN_|N_","") %>% unique(.)])
+
+profile_status_by_item_data <- 
+  map2(PC_datasets,
+       exam_items,
+       ~ copy(.x) %>% 
+          # Subset data by column names
+          .[,.SD,.SDcols = c("IDCODE","Cluster","Group",.y)] %>% 
+          # Transform data set into long format for further data portraying
+          melt(.,
+               measure.vars = .y,
+               variable.name = "Exam_item",
+               value.name = "Status") %>%
+          # Modify results values by removing Exam_item strings in values
+          .[,Status := str_replace_all(Status,
+                                       paste(c("_",.y),collapse = "|"),
+                                       "")] %>%
+          # Tabulation
+          .[,.N,by = c("Cluster","Exam_item","Status")] %>%
+          # Transform data set for tabulating every possible permutation
+          dcast.data.table(.,... ~ Status,value.var = "N",fill = 0) %>% 
+          melt.data.table(.,id.vars = c("Cluster","Exam_item"),variable.name = "Status",value.name = "N") %>% 
+          # Calculation for proportions
+          .[,proportion := round(N/sum(N),3),by = c("Cluster","Exam_item")] %>%
+          # Subset data set for those rows of Abnormal Status
+          .[Status %in% "AbN",] %>%
+          # Data ordering
+          .[order(Cluster,-proportion),]
+       )
+
+```
+<br/>
+
+### Prepare plot data for immunomarker profile
+```{r plot data for immunomarker profile, warning=FALSE, message=FALSE}
+radar_plot_item_order <- 
+  map(profile_status_by_item_data,
+      ~ split(.x,by = "Cluster")
+      ) %>% 
+  map(., 
+      ~ map(.x, ~ .x[order(-proportion),] %>%
+                   .[proportion > 0.1,as.character(Exam_item)]) 
+      ) %>%
+  map(., ~ flatten_chr(.x)) %>% 
+  map(., ~ unique(.x)) %>% 
+  # set the above variables in the front of other variables
+  map2(.,
+       profile_status_by_item_data,
+      ~ { c(.x,str_subset(levels(.y$Exam_item),
+                          paste(.,collapse = "|"),
+                          negate = TRUE)) }
+      ) %>% 
+  map2(.,
+       profile_status_by_item_data,
+       ~ str_subset(.x,
+                    split(.y,by = "Exam_item") %>% 
+                    # remove exam items in all clusters are less than 10%
+                    map(., ~ .x[all(proportion<=0.1),unique(as.character(Exam_item))]) %>% 
+                     flatten_chr(.) %>% 
+                     paste(.,collapse = "|"),
+                    negate = TRUE)
+       )
+
+# customised_rose_plot_item_order <-
+#   c("ANA", "C3", "C4", "Anti-dsDNA",
+#     "CRYOID", "ACAG", "Anti-RNP-Sm", "Anti-SSB", "Anti-SSA", "RF")
+
+profile_status_by_item_plot_data <-  
+  map2(profile_status_by_item_data,
+       radar_plot_item_order,
+       ~ copy(.x) %>% 
+         .[,.SD,.SDcols = c("Cluster","Exam_item","proportion")] %>% 
+         .[Exam_item %in% .y,] %>% 
+         .[,Exam_item := factor(Exam_item,levels = .y)] %>%
+         .[,Cluster := factor(Cluster,
+                              levels = levels(Cluster),
+                              labels = map_chr(levels(Cluster),
+                                               ~ str_c("Cluster ",.x)))] %>% 
+           .[order(Cluster,Exam_item),] %>% 
+         dcast.data.table(.,... ~ Exam_item,value.var = "proportion")
+       )
+
+```
+<br/>
+
+### Profile immunomarker status by cluster - separated
+```{r Immunomarker status by cluster - separated, warning=FALSE, message=FALSE}
+# A function for change the colour transparency of a given colour set
+t_col <- 
+  function(color, percent = percent, name = NULL) {
+    ## Get RGB values for named colour
+    rgb.val <- col2rgb(color)
+  
+    ## Make new colour using input colour as base and alpha set by transparency
+    t.col <- rgb(rgb.val[1], rgb.val[2], rgb.val[3],
+                 max = 255,
+                 alpha = (100 - percent) * 255 / 100,
+                 names = name)
+    
+    ## Save the colour
+    invisible(t.col)
+}
+
+profile_status_by_item_roseplot <-
+  map2(profile_status_by_item_plot_data,
+       cluster_color_set,
+       ~ copy(.x) %>% 
+         melt.data.table(data = .,
+                         id.vars = "Cluster",
+                         variable.name = "Biomarker",
+                         variable.factor = TRUE,
+                         value.name = "Proportion") %>% 
+         { ggplot(data = .) +
+             geom_bar(aes(x = Biomarker, y = Proportion, fill = Cluster), stat = "identity", colour = "grey20", size = .3) +
+             scale_fill_manual(values = map_chr(.y, ~ t_col(.x,percent = 40))) +
+             scale_y_continuous(breaks = seq(0,1,by = .25),
+                                labels = paste0(seq(0,100,by = 25),"%"),
+                                limits = seq(0,1)) +
+             theme_bw() +
+             coord_polar(theta = "x", start = -pi/45, clip = "off") +
+             theme(panel.border = element_blank(),
+                   panel.background = element_rect(fill = "white"),
+                   panel.grid = element_line(size = 0.5,linetype = 2),
+                   # panel.spacing = unit(.2, "lines"),
+                   legend.position = "none",
+                   axis.title = element_blank(),
+                   axis.text.x = element_text(face = "bold",size = rel(.6),margin = margin(10,0,0,0)),
+                   axis.text.y = element_text(face = "bold",size = rel(.8),margin = margin(0,10,0,0)),
+                   axis.ticks.y.left = element_blank(),
+                   strip.text = element_text(face = "bold",size = rel(1)),
+                   strip.background = element_blank(),
+                   plot.background = element_rect(fill = "white", color = "white")) +
+             facet_wrap(Cluster ~ .,nrow = 1)
+           }
+       )
+
+```
+<br/>
+
+### Combined graphs
+```{r}
+concatenated_profile_status_by_item_roseplot <- 
+  ggarrange(profile_status_by_item_roseplot[[1]],
+            profile_status_by_item_roseplot[[2]],
+            nrow = 2,
+            labels = c(paste0(result_list_name[1]," (n = ", PC_datasets[[1]][,uniqueN(IDCODE) %>% prettyNum(.,big.mark = ",")],")"),
+                       paste0(result_list_name[2]," (n = ", PC_datasets[[2]][,uniqueN(IDCODE) %>% prettyNum(.,big.mark = ",")],")")),
+            label.x = -.08
+            )
+```
+<br/>
+
+***
+# === II. Clinical implication analysis ===
+
+## Import datasets
+From [Data_Wrangling.md](https://github.com/DHLab-TSENG/Heterogeneity-in-SAD-paper/blob/main/Data_Wrangling.md)
+```{r Import diagnosis related datasets, results='hide', message=FALSE}
+raw_diagnosis_data    <- readRDS("./Dataset/D1_1_concatenated_diagnosis_data(dt_query_dx_data).rds")
+CTD_diagnosis_data    <- readRDS("./Dataset/A1_1_diagnosis_eachDate_data.rds")
+CTD_diagnosis_summary <- readRDS("./Dataset/A1_2_diagnosis_Count_eachDx_data.rds")
+```
+
+***
+
+## Preprocess data
+### Import diagnosis database and its profiling datasets
+```{r Import diagnosis database and its profiling datasets}
+dx_database <- 
+  map(PC_datasets,
+      ~ raw_diagnosis_data %>% 
+        # transform column types
+        .[,DSSSQNO := as.character(DSSSQNO)] %>% 
+        # Extract study subjects
+        .[IDCODE %in% .x$IDCODE]
+      )
+
+# Extract study subjects
+CustomGrepGroup_groupedDT<- 
+  map(PC_datasets,
+      ~ CTD_diagnosis_data[ID %in% .x$IDCODE]
+      )
+
+# Extract study subjects
+CustomGrepGroup_summarised_groupedDT <- 
+  map(PC_datasets,
+      ~ CTD_diagnosis_summary[ID %in% .x$IDCODE]
+      )
+```
+<br/>
+
+### Subset subjects' data by follow-up period thresholds
+```{r Subset subject data by follow-up period thresholds}
+Followup_threshold <- 3 # at least for three years
+
+CustomGrepGroup_summarised_groupedDT_sufficient_followup <- 
+  map(CustomGrepGroup_summarised_groupedDT,
+      ~ .x[,as.numeric(period/365.25) >= Followup_threshold] %>% 
+        { .x[.,] })
+
+```
+<br/>
+
+### Profile number of remaining subjects after follow-up period filter by SAD group
+```{r Profile number of remaining subjects}
+Sufficient_followup_profile <- 
+  map2(CustomGrepGroup_summarised_groupedDT_sufficient_followup,
+       PC_datasets,
+       ~ copy(.x) %>% 
+           .[,Sufficient_N := uniqueN(ID),by = c("Group")] %>% 
+           .[,unique(.SD),.SDcols = c("Group","Sufficient_N")] %>% 
+           .[order(Group),] %>% 
+           merge(.,
+                 .y[,.N,by = "Group"],
+                 by = "Group") %>% 
+           .[,Sufficient_proportion := round(Sufficient_N/N*100,1)]
+       )
+      
+
+print(Sufficient_followup_profile)
+```
+<br/>
+
+***
+
+## Comorbidities identified by CCS
+### Convert ICD into CCS, retaining data within the given time range
+```{r Convert ICD into CCS and subset data by time, cache=TRUE, message=FALSE, warning=FALSE, results='hide'}
+# Query CCS by Diagnosis ICD-code
+correction_table <- 
+  map(dx_database,
+      ~ icdDxToCCS(dxDataFile = .x,
+                   idColName = IDCODE,
+                   icdColName = mod_DSSID,
+                   dateColName = IPDAT,
+                   isDescription = FALSE,
+                   icd10usingDate = "2016-01-01") %>% 
+        pluck(.,"Error") %>% 
+        .[Suggestion!="",unique(.SD),.SDcols = c("ICD","Suggestion")]
+      )
+
+CCSLong_follow_window <- 
+  map2(dx_database,
+       correction_table,
+       ~ merge(.x,
+               .y,
+               by.x = "mod_DSSID",
+               by.y = "ICD",
+               all.x = TRUE) %>% 
+         # Replace original ICD-code with suggestion one (correct one)
+         .[!is.na(Suggestion),mod_DSSID := Suggestion] %>% 
+         # Query CCS with correct ICD-code
+         icdDxToCCS(dxDataFile = .,
+                    idColName = IDCODE,
+                    icdColName = mod_DSSID,
+                    dateColName = IPDAT,
+                    isDescription = TRUE,
+                    icd10usingDate = "2016-01-01")
+       )
+
+# Extract CCS data where the original ICD-codes within given time range
+plan(multisession, workers = 5)
+
+CCS_within_DateRange <- list()
+
+for (i in seq_along(CCSLong_follow_window)) {
+  
+  CCSLong_follow_window_subsset <- 
+    pluck(CCSLong_follow_window[[i]],"groupedDT")
+  
+  CustomGrepGroup_summarised_groupedDT_sufficient_followup_subset <- 
+    pluck(CustomGrepGroup_summarised_groupedDT_sufficient_followup,i)
+  
+  CCS_within_DateRange[[i]] <- 
+    future_pmap_dfr(list(CustomGrepGroup_summarised_groupedDT_sufficient_followup_subset$ID,
+                         CustomGrepGroup_summarised_groupedDT_sufficient_followup_subset$firstCaseDate,
+                         CustomGrepGroup_summarised_groupedDT_sufficient_followup_subset$endCaseDate),
+                          ~ CCSLong_follow_window_subsset %>% 
+                            .[ID %in% ..1 & Date %between% c(..2,..3),]
+                    )
+  }
+
+plan(sequential)
+```
+<br/>
+
+### Generate CCS reference database by transforming website data derived from HCUP
+```{r Generate CCS reference database}
+CCS_catagories <- 
+  system("curl -s https://www.hcup-us.ahrq.gov/toolssoftware/ccs/AppendixASingleDX.txt |
+          awk 'NF && /^[1-9]/ {print $0}' ",
+         intern = TRUE)
+
+CCS_bundle <- 
+  system("curl -s https://www.hcup-us.ahrq.gov/toolssoftware/ccs/AppendixASingleDX.txt |
+          awk 'NR>4 && !/^[1-9#]/ {print $0}' ",
+         intern = TRUE) %>% 
+  str_trim(.,"both") %>%
+  data.table(CCS = .)
+
+split_index <-   
+  copy(CCS_bundle) %>% 
+  .[,.(which(str_length(CCS)==0))] %>% 
+  { .[,c(c(.[1,V1], 
+           V1 - lag(V1))[-2], 
+         .[,nrow(CCS_bundle)-tail(V1,1)]) ] } %>% 
+  map2(seq(1:length(CCS_catagories)),
+       .,
+       ~ rep(.x,.y)) %>% 
+  flatten_chr(.) %>% 
+  data.table(CCS_Group_Index = .)
+
+CCS_reference <- 
+  cbind(CCS_bundle,split_index) %>% 
+  split(.,by = "CCS_Group_Index") %>% 
+  map(., ~ .x[,head(.SD,-1)]) %>%
+  setNames(.,CCS_catagories) %>% 
+  map(.,
+      ~ .[,str_flatten(CCS," ") %>% str_split(.," ")] ) %>% 
+  rbindlist(.,idcol = "CCS_category") %>% 
+  setnames(.,"V1","CCS_code")
+
+```
+<br/>
+
+### Summarise unmatched ICDs and resolve by modifying ICD codes
+```{r Deal with unmatched ICD and find possible solutions}
+ambiguous_ICD <- 
+  map(CCSLong_follow_window,
+      ~ pluck(.x,"groupedDT") %>% 
+        copy(.) %>% 
+        .[is.na(CCS_CATEGORY_DESCRIPTION),] %>% 
+        .[,':=' (Year = year(Date),
+                `Befor_2016-01-01` = ifelse(ymd(Date)<ymd("2016-01-01"),"TRUE","FALSE") )] %>% 
+        .[,.N,by = c("ICD","Befor_2016-01-01")] %>% 
+        .[order(`Befor_2016-01-01`,-N),] %>% 
+        # Look up for corresponding CCS and matched patterns using ICDs
+        .[,':=' (prefix_0 = map_lgl(ICD, ~ CCS_reference[str_detect(CCS_code,paste0("^[0]+",.x,"$")),.N]>0),
+                 suffix_0 = map_lgl(ICD, ~ CCS_reference[str_detect(CCS_code,paste0("^",.x,"[0]+[0-9]*")),.N]>0),
+                 suffix_1 = map_lgl(ICD, ~ CCS_reference[str_detect(CCS_code,paste0("^",.x,"[1]+[0-9]*")),.N]>0),
+                 prefix_0_ptrn = map_chr(ICD, ~ CCS_reference[str_detect(CCS_code,paste0("^[0]+",.x,"$")),
+                                                              str_c(CCS_code,collapse = " | ")]),
+                 suffix_0_ptrn = map_chr(ICD, ~ CCS_reference[str_detect(CCS_code,paste0("^",.x,"[0]+[0-9]*")),
+                                                              str_c(CCS_code,collapse = " | ")]),
+                 suffix_1_ptrn = map_chr(ICD, ~ CCS_reference[str_detect(CCS_code,paste0("^",.x,"[1]+[0-9]*")),
+                                                              str_c(CCS_code,collapse = " | ")])
+                 )]
+      )
+
+correction_table_padding0or1 <- 
+  map(ambiguous_ICD,
+      ~ copy(.x) %>% 
+        .[prefix_0==TRUE & str_detect(ICD,"^[8,9]"),
+          replacement := map_chr(prefix_0_ptrn, ~ str_split(.x, "\\ \\| ") %>%
+                                                  map_chr(.,~ tail(.x,1)) )] %>%
+        .[prefix_0==TRUE & str_detect(ICD,"^[^8,9]"),
+          replacement := map_chr(prefix_0_ptrn, ~ str_split(.x, "\\ \\| ") %>% 
+                                                  map_chr(.,~ head(.x,1)) )] %>% 
+        # for 345, 345, 535 to xxx00
+        .[is.na(replacement) & suffix_0==TRUE & str_length(ICD)==3 &
+          map_lgl(suffix_0_ptrn, ~ { str_split(.x,"\\ \\| ") %>%
+                                      map_chr(., ~ head(.x,1)) %>%
+                                      map(., ~ str_length(.x)) == 4 } ) &
+          map_lgl(suffix_0_ptrn, ~ { str_split(.x,"\\ \\| ") %>% 
+                                      map_int(., ~ length(.x)) > 1 } ),
+          replacement := map_chr(ICD, ~ str_pad(.x,5,side = "right",pad = "0") )] %>% 
+        # for 946, 116 to xxx0
+        .[is.na(replacement) & suffix_0==TRUE & str_length(ICD)==3 &
+          map_lgl(suffix_0_ptrn, ~ { str_split(.x,"\\ \\| ") %>%
+                                      map_chr(., ~ head(.x,1)) %>%
+                                      map(., ~ str_length(.x)) == 4 } ) &
+          map_lgl(suffix_0_ptrn, ~ { str_split(.x,"\\ \\| ") %>% 
+                                      map_int(., ~ length(.x)) == 1 } ),
+          replacement := map_chr(ICD, ~ str_pad(.x,4,side = "right",pad = "0") )] %>% 
+        # for 295, 532, 531, 493 and others to xxx00
+        .[is.na(replacement) & suffix_0==TRUE,
+          replacement := map_chr(suffix_0_ptrn, ~ { str_split(.x,"\\ \\|") %>% 
+                                                     map_chr(., ~ head(.x,1)) } )] %>% 
+        .[is.na(replacement) & suffix_1==TRUE,
+          replacement := map_chr(suffix_1_ptrn, ~ { str_split(.x,"\\ \\|") %>% 
+                                                     map_chr(., ~ head(.x,1)) } )] %>% 
+        # remove unfixable data
+        .[!is.na(replacement),]
+      )
+```
+<br/>
+
+### Rerun conversion from ICD to CCS using modified (corrected) ICD data
+```{r Rerun the conversion from ICD to CCS with fixed ICD data, cache=TRUE, message=FALSE, warning=FALSE, results='hide'}
+CCSLong_follow_window_final <- 
+  pmap(list(dx_database,
+            correction_table,
+            correction_table_padding0or1),
+       ~ merge(..1,
+               ..2,
+               by.x = "mod_DSSID",
+               by.y = "ICD",
+               all.x = TRUE) %>% 
+         .[!is.na(Suggestion),mod_DSSID := Suggestion] %>% 
+         merge(.,
+               ..3[,unique(.SD),.SDcols = c("ICD","replacement")],
+               by.x = "mod_DSSID",
+               by.y = "ICD",
+               all.x = TRUE) %>% 
+         .[!is.na(replacement),mod_DSSID := replacement] %>% 
+         icdDxToCCS(dxDataFile = .,
+                   idColName = IDCODE,
+                   icdColName = mod_DSSID,
+                   dateColName = IPDAT,
+                   isDescription = TRUE,
+                   icd10usingDate = "2016-01-01")
+       )
+
+# Extract CCS data where the original ICD-codes within given time range
+plan(multisession, workers = 5)
+
+CCS_within_DateRange <- list()
+
+for (i in seq_along(CCSLong_follow_window_final)) {
+
+  CCSLong_follow_window_subsset <- 
+    pluck(CCSLong_follow_window[[i]],"groupedDT")
+  
+  CustomGrepGroup_summarised_groupedDT_sufficient_followup_subset <- 
+    pluck(CustomGrepGroup_summarised_groupedDT_sufficient_followup,i)
+  
+  CCS_within_DateRange[[i]] <- 
+    future_pmap_dfr(list(CustomGrepGroup_summarised_groupedDT_sufficient_followup_subset$ID,
+                         CustomGrepGroup_summarised_groupedDT_sufficient_followup_subset$firstCaseDate,
+                         CustomGrepGroup_summarised_groupedDT_sufficient_followup_subset$endCaseDate),
+                          ~ CCSLong_follow_window_subsset %>% 
+                            .[ID %in% ..1 & Date %between% c(..2,..3),]
+                    )
+  }
+
+plan(sequential)
+```
+<br/>
+
+### Merge clustering results with CCS data set and generate profile data set for clinical implications analysis
+```{r Merge clustering results with CCD data and prepare dataset for clinical implications analysis}
+removed_CCS <- c("Residual codes; unclassified",
+                 "Other connective tissue disease",
+                 "External cause codes")
+
+CCS_within_DateRange_Cluster_Group <-
+  map2(CCS_within_DateRange,
+       PC_datasets,
+       ~ merge(.x,
+               .y[,.SD,.SDcols = c("IDCODE","Group","Cluster")],
+               by.x = "ID",
+               by.y = "IDCODE",
+               all.x = TRUE)
+       )
+
+CCS_within_DateRange_Cluster_Group_profile_data <- 
+  map(CCS_within_DateRange_Cluster_Group,
+      ~ copy(.x) %>% 
+        .[str_detect(CCS_CATEGORY_DESCRIPTION,paste(removed_CCS,collapse = "|"),negate = TRUE),] %>% 
+        .[,Cluster := paste("Cluster",Cluster)] %>%
+        .[,unique(.SD),.SDcols = c("ID","CCS_CATEGORY_DESCRIPTION","Cluster")] %>% 
+        # Modify description strings for an easy-to-read purpose
+        .[CCS_CATEGORY_DESCRIPTION %in% "Inflammation; infection of eye (except that caused by tuberculosis or sexually transmitteddisease)",
+          CCS_CATEGORY_DESCRIPTION := "Inflammation; infection of eye"] %>% 
+        .[CCS_CATEGORY_DESCRIPTION %in% "Pneumonia (except that caused by tuberculosis or sexually transmitted disease)",
+          CCS_CATEGORY_DESCRIPTION := "Pneumonia"] %>% 
+        .[CCS_CATEGORY_DESCRIPTION %in% "Hodgkin`s disease",
+          CCS_CATEGORY_DESCRIPTION := "Hodgkin's disease"] %>% 
+        .[CCS_CATEGORY_DESCRIPTION %in% "Non-Hodgkin`s lymphoma",
+          CCS_CATEGORY_DESCRIPTION := "Non-Hodgkin's lymphoma"] %>% 
+        .[CCS_CATEGORY_DESCRIPTION %in% "Parkinson`s disease",
+          CCS_CATEGORY_DESCRIPTION := "Parkinson's disease"]
+      )
+
+```
+<br/>
+
+### *Positive proportions in each CCS by Cluster
+```{r Profile positive proporitons in each CCS by Cluster}
+CCS_retain_variables <- 
+  map(CCS_within_DateRange_Cluster_Group_profile_data,
+      ~ copy(.x) %>% 
+        .[,Cluster_size := uniqueN(ID),by = c("Cluster")] %>% 
+        .[!is.na(CCS_CATEGORY_DESCRIPTION),.N,by = c("Cluster","CCS_CATEGORY_DESCRIPTION","Cluster_size")] %>% 
+        .[,prop := round(N/Cluster_size*100,2)] %>% 
+        dcast.data.table(.,CCS_CATEGORY_DESCRIPTION ~ Cluster,value.var = "prop",fill = 0) %>% 
+        # Threshold setting
+        { .[rowSums(. <= 33) < n_distinct(.x$Cluster)] } %>%
+        .[,CCS_CATEGORY_DESCRIPTION]
+      )
+
+
+table_one_CCS_data <- 
+  map2(CCS_within_DateRange_Cluster_Group_profile_data,
+       CCS_retain_variables,
+       ~ dcast.data.table(
+           data = .x[CCS_CATEGORY_DESCRIPTION %in% .y,],
+           formula = ID + Cluster ~ CCS_CATEGORY_DESCRIPTION,
+           fun.aggregate = length,
+           fill = "0")
+       )
+
+table_one_CCS <- 
+  map2(table_one_CCS_data,
+       CCS_retain_variables,
+       ~ CreateTableOne(data = .x,
+                        strata = "Cluster",
+                        vars = .y,
+                        factorVars = .y,
+                        test = TRUE,
+                        includeNA = FALSE)
+       )
+
+```
+<br/>
+
+### Prepare plot data for displaying positive rate of each CCS category by cluster
+```{r Prepare plot data for displaying positive rate of each CCS category by cluster}
+comorbidity_CCS_proportion_byGroup_data <- 
+  map2(table_one_CCS_data,
+       PC_datasets,
+       ~ merge(.x,
+               .y[,unique(.SD),.SDcols = c("IDCODE","Group")],
+               by.x = "ID",
+               by.y = "IDCODE",
+               all.x = TRUE) %>% 
+         melt.data.table(data = .,
+                         id.vars = c("ID","Group","Cluster"),
+                         variable.name = "Comorbidity",
+                         value.name = "Affected",
+                         variable.factor = FALSE,
+                         value.factor = TRUE) %>% 
+         { merge(.[,n_distinct(ID),by = c("Cluster","Group")],
+                 .[,sum(Affected),by = c("Cluster","Group","Comorbidity")],
+                 by = c("Cluster","Group"),
+                 all.y = TRUE)
+           } %>% 
+         setnames(.,c("V1.x","V1.y"),c("Cluster_size","Number_of_affected")) %>% 
+         # Frequency computations
+         .[,Proportion_of_affected := round(Number_of_affected/Cluster_size,3)*100,
+           by = c("Cluster","Group","Comorbidity")] %>% 
+         # Subset by variable
+         .[,.SD,.SDcols = c("Cluster","Group","Comorbidity","Proportion_of_affected")] %>% 
+         # Transform dataset into wide format
+         dcast.data.table(., ... ~ Cluster,value.var = "Proportion_of_affected") %>% 
+         .[order(Group,-`Cluster 1`),] %>% 
+         .[,Comorbidity := factor(Comorbidity,levels = unique(Comorbidity))] %>% 
+         # Split by SAD group
+         split(.,by = "Group",keep.by = FALSE) %>% 
+         # Transform format of dataset
+         map(., ~ as.matrix(.x,rownames = "Comorbidity"))
+       )
+
+```
+<br/>
+
+### Plots
+```{r Visualize positive rate of each CCS category by cluster, message=FALSE, results='hide'}
+paletteLength <- 20
+mid_point <- 65
+min_value <- 0
+max_value <- 100
+Color_list <- colorRampPalette(c("darkgreen", "white", "darkgoldenrod2", "firebrick3"))(paletteLength)
+Break_list <- c(seq(min_value,mid_point,length.out = ceiling(paletteLength/2) + 1), 
+                seq(mid_point, max_value, length.out = floor(paletteLength/2) + 1)[-1] )  
+  
+bold_row_labels <- map(comorbidity_CCS_proportion_byGroup_data,
+                       ~ map(.x, ~ lapply(rownames(.x),function(x) bquote(bold(.(x))) ) )
+                       )
+bold_col_labels <- map(comorbidity_CCS_proportion_byGroup_data,
+                       ~ map(.x, ~ lapply(colnames(.x),function(x) bquote(bold(.(x))) ) )
+                       )
+
+comorbidity_CCS_prevalence_byGroup_plot <-
+  pmap(list(comorbidity_CCS_proportion_byGroup_data,
+            bold_row_labels,
+            bold_col_labels,
+            list(c(FALSE,FALSE,FALSE),c(TRUE,FALSE,FALSE))),
+       ~ list(..1, ..2, ..3, names(..1), ..4)
+       ) %>% 
+  map(.,
+      ~ pmap(list(.x[[1]],.x[[2]],.x[[3]],.x[[4]],.x[[5]]),
+             ~ pheatmap(mat = ..1,
+                        color = Color_list,
+                        cellwidth = 6,
+                        cellheight = 6,
+                        clustering_method = "average",
+                        cluster_cols = FALSE,
+                        breaks = Break_list,
+                        fontsize = 6,
+                        legend_breaks = seq(min_value,max_value,by = paletteLength/2),
+                        legend_labels = seq(min_value,max_value,by = paletteLength/2),
+                        labels_row = as.expression(..2),
+                        labels_col = as.expression(..3),
+                        main = ifelse(..4 == "Sjogren's syndrome",
+                                      paste(..4,
+                                            str_c(rep(" ",28),collapse = "")),
+                                      ifelse(..4 == "Rheumatoid arthritis",
+                                             paste(..4,
+                                                   str_c(rep(" ",28),collapse = "")),
+                                             ifelse(..4 == "Systemic lupus erythematosus",
+                                                    paste(..4,
+                                                          str_c(rep(" ",10), collapse = "")),
+                                                    "")
+                                             )
+                                      ),
+                        legend = ..5,
+                        silent = TRUE
+                        )
+             )
+      )
+
+```
+<br/>
+
+### Combined graphs
+```{r}
+concatenated_comorbidity_prevalence_byGroup_plot <- 
+  cbind(rbind(comorbidity_CCS_prevalence_byGroup_plot[[1]][[1]]$gtable,
+              comorbidity_CCS_prevalence_byGroup_plot[[1]][[2]]$gtable,
+              comorbidity_CCS_prevalence_byGroup_plot[[1]][[3]]$gtable),
+        rbind(comorbidity_CCS_prevalence_byGroup_plot[[2]][[1]]$gtable,
+              comorbidity_CCS_prevalence_byGroup_plot[[2]][[2]]$gtable,
+              comorbidity_CCS_prevalence_byGroup_plot[[2]][[3]]$gtable)
+        ) %>% 
+        as.ggplot(.) +
+        ggtitle(paste(str_c(rep(" ",10),collapse = ""),
+                      result_list_name[1],"( n = ", PC_datasets[[1]][,uniqueN(IDCODE) %>% prettyNum(.,big.mark = ",")],")",
+                      str_c(rep(" ",58),collapse = ""),
+                      result_list_name[2],"( n = ", PC_datasets[[2]][,uniqueN(IDCODE) %>% prettyNum(.,big.mark = ",")],")",
+                      collapse = "")) +
+        theme(title = element_text(size = rel(.8), face = "bold"))
+
+```
+***
+# === III. Results presentation ===
+
+## Create file folder
+```{r}
+if(!dir.exists("./Reproducibility_Analysis_files/")) {
+   dir.create("./Reproducibility_Analysis_files/", recursive = TRUE)
+  }
+
+```
+<br/>
+
+## Clustering results
+```{r}
+ggexport(concatenated_clustering_results_plot,
+         filename = paste0("./Reproducibility_Analysis_files/",
+                           "clustering_results_plot",
+                           ".jpeg"),
+         width = 12000,height = 12000,res = 1000,verbose = FALSE)
+
+include_graphics(paste0("./Reproducibility_Analysis_files/",
+                        "clustering_results_plot",
+                        ".jpeg")
+                 )
+```
+<br/>
+
+## Status profile
+```{r}
+ggexport(concatenated_profile_status_by_item_roseplot,
+         filename = paste0("./Reproducibility_Analysis_files/",
+                           "profile_status_byItem_plot",
+                           ".jpeg"),
+         width = 13000,height = 6600,res = 1000,verbose = FALSE)
+
+include_graphics(paste0("./Reproducibility_Analysis_files/",
+                        "profile_status_byItem_plot",
+                        ".jpeg")
+                 )
+```
+<br/>
+
+```{r}
+max_number_CCS <- 
+  map(comorbidity_CCS_proportion_byGroup_data,
+      ~ map_dbl(.x, ~ rownames(.x) %>% length(.))
+      ) %>% 
+    flatten_dbl(.) %>% 
+    max(.)
+
+max_length_CCS <- 
+  map(comorbidity_CCS_proportion_byGroup_data,
+      ~ map_dbl(.x, ~ rownames(.x) %>% str_length(.) %>% max(.)) 
+      ) %>% 
+    flatten_dbl(.) %>% 
+    max(.)
+
+ggexport(concatenated_comorbidity_prevalence_byGroup_plot,
+         filename = paste0("./Reproducibility_Analysis_files/",
+                           "comorbidity_prevalence_byGroup_plot",
+                           ".jpeg"),
+         width = max_length_CCS*150,height = max_number_CCS*350,res = 1000,verbose = FALSE)
+
+include_graphics(paste0("./Reproducibility_Analysis_files/",
+                        "comorbidity_prevalence_byGroup_plot",
+                        ".jpeg")
+                 )
+
+
+
+```
+<br/>

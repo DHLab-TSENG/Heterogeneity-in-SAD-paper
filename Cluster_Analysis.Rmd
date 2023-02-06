@@ -1,5 +1,5 @@
 ---
-title: '**Identifying heterogeneous subgroups of systemic connective tissue diseases by applying a joint dimension reduction and clustering approach to immunomarkers : a retrospective study** <br/>- cluster analysis'
+title: '**Identifying heterogeneous subgroups of systemic autoimmune diseases by applying a joint dimension reduction and clustering approach to immunomarkers : a retrospective study** <br/>- cluster analysis'
 author: |
   **Chia-Wei Chang^a,#^, Hsin-Yao Wang^b,#^, Wei-Lin Lo^c^, Wei-Ting Lin^b^, Jia-Ruei Yu^b^, Yi-Ju Tseng^a,d,\*^** <br/>
   ^a^ Department of Computer Science, National Yang Ming Chiao Tung University, Hsinchu, Taiwan <br/>
@@ -119,9 +119,9 @@ sapply(sapply(strsplit(.ghub_pkgs,"/"),`[`,2),
 # Import datasets
 ## Analysis-ready dataset[^*]
 
-From [Data_Wrangling.md](https://github.com/DHLab-TSENG/Heterogeneity-in-SCTD-paper/blob/main/Data_Wrangling.md)
+From [Data_Wrangling.md](https://github.com/DHLab-TSENG/Heterogeneity-in-SAD-paper/blob/main/Data_Wrangling.md)
 
-```{r SCTD dataset}
+```{r SAD dataset}
 monoCTD_dataset <- 
   readRDS("./Dataset/A5_monoCTD_ready_analysis_dataset.rds") %>%
   # Subset subjects first diagnosed between 2001 and 2016
@@ -181,8 +181,8 @@ cluster_analysis_data <-
 ```
 <br/>
 
-## Subset for selected SCTDs
-```{r Subset for selected SCTDs}
+## Subset for selected SADs
+```{r Subset for selected SADs}
 selected_disease_groups <- 
   c("Sjogren's syndrome","Rheumatoid arthritis","Systemic lupus erythematosus")
 
@@ -415,9 +415,9 @@ p_value_table <-
         .[,"p value" := ifelse(`p value`<0.001,"<0.001",sprintf("%.3f",`p value`))]) %>% 
     rbindlist(.)
 
-# statistics calculations for continuous variables by SCTD group
+# statistics calculations for continuous variables by SAD group
 table_one_continuous_var <- 
-  # extract desired statistics and merge them into one data.table by SCTD group
+  # extract desired statistics and merge them into one data.table by SAD group
   map(table_one_by_diseases$ContTable,
       ~ .x[,c("n","mean","sd")] %>% 
         as.data.table(x = .,keep.rownames = "Statistics") %>% 
@@ -441,9 +441,9 @@ table_one_continuous_var <-
         by.y = "Variable")
   
 
-# statistics calculations for categorical variables by SCTD group
+# statistics calculations for categorical variables by SAD group
 table_one_categorical_var <- 
-  # extract desired statistics and merge them into one data.table by SCTD group
+  # extract desired statistics and merge them into one data.table by SAD group
   map(table_one_by_diseases$CatTable,
       ~ map(.x, ~ .x[,c("level","freq","percent")]) %>% 
         rbindlist(.,idcol = "Ori_Variable")
@@ -594,7 +594,7 @@ cluster_biplots <-
                             aes_string(x = .x[1],y = .x[2],fill = .x[5]),color = NA,
                             alpha = 0.2) +
           scale_linetype_discrete(name = "Immunomaker Test Results") +
-          scale_shape_discrete(name = "SCTD",labels = map_chr(selected_disease_groups,
+          scale_shape_discrete(name = "SAD",labels = map_chr(selected_disease_groups,
                                                               ~ str_split(.x,"\\ ") %>%
                                                                 map_chr(.,~ str_sub(.x,1,1) %>% toupper(.) %>% str_flatten(.)))) +
           scale_colour_manual(name = "Cluster",values = cluster_color_set) +
@@ -689,7 +689,7 @@ profile_by_cluster_integrated <-
                          breaks = seq(0,1,by = 0.2),
                          labels = seq(0,100,by = 20),
                          expand = c(0,0),) +
-      scale_fill_manual(name = "CTDs",values = pal_jama()(3)) +
+      scale_fill_manual(name = "SAD",values = pal_jama()(3)) +
       facet_grid(~ Cluster_label, space = "free_x", scales = "free_x",switch = "x") +
       theme_bw() +
       theme(legend.title = element_text(face = "bold",size = rel(1)),
@@ -724,8 +724,8 @@ ggsave(filename = paste0("./Cluster_Analysis_files/Cluster_profile/",
 ```
 <br/>
 
-## Profile the number and proportion of case in each SCTD group
-```{r Number and proportion of case in each SCTD group}
+## Profile the number and proportion of case in each SAD group
+```{r Number and proportion of case in each SAD group}
 cluster_size_string <- 
   copy(PC_data) %>% 
   .[,.N,by = "Group"] %>% 
@@ -767,7 +767,7 @@ profile_by_group_integrated <-
   ggplot(profile_by_group_holistic_data,aes(width = Group_proportion)) +
       geom_bar(aes(x = x_position,y = Cluster_proportion_within_group,fill = Cluster),
                stat = "identity",position = "stack",alpha = 0.7) +
-      scale_x_continuous(name = "CTDs\n(n)",
+      scale_x_continuous(name = "SAD\n(n)",
                          breaks = unique(profile_by_group_holistic_data$x_position),
                          labels = unique(profile_by_group_holistic_data$Group),
                          expand = c(0.001,0.001)) +
@@ -1128,6 +1128,6 @@ ggexport(concatenated_immunomarkers_profile_plot,
 <br/>
 
 Next section:
-[Clinical_Implication_Analysis.md](https://github.com/DHLab-TSENG/Heterogeneity-in-SCTD-paper/blob/main/Clinical_Implication_Analysis.md)
+[Clinical_Implication_Analysis.md](https://github.com/DHLab-TSENG/Heterogeneity-in-SAD-paper/blob/main/Clinical_Implication_Analysis.md)
 
 [^3]: Please refer to the manuscript for **Figure 3**
