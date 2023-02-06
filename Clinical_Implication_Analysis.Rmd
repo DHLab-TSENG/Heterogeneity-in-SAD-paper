@@ -14,7 +14,7 @@ output:
   github_document
 ---
 
-```{css CSS settings, echo=FALSE}
+```{css CSS settings, echo=FALSE,eval=FALSE}
 h1.title {
   font-size: 28px;
   /* color: royalblue; */
