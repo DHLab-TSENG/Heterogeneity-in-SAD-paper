@@ -1,11 +1,13 @@
 ---
 title: '**Identifying heterogeneous subgroups of systemic autoimmune diseases by applying a joint dimension reduction and clustering approach to immunomarkers : a retrospective study** <br/>- clinical implication analysis'
 author: |
-  **Chia-Wei Chang^a,#^, Hsin-Yao Wang^b,#^, Wei-Lin Lo^c^, Wei-Ting Lin^b^, Jia-Ruei Yu^b^, Yi-Ju Tseng^a,d,\*^** <br/>
+  **Chia-Wei Chang^a,#^, Hsin-Yao Wang^b,#^, Wan-Ying Lin^c^, Yu-Chiang Wang^d^, Wei-Lin Lo^e^, Wei-Ting Lin^b^, Jia-Ruei Yu^b^, Yi-Ju Tseng^a,d,\*^** <br/>
   ^a^ Department of Computer Science, National Yang Ming Chiao Tung University, Hsinchu, Taiwan <br/>
   ^b^ Department of Laxboratory Medicine, Chang Gung Memorial Hospital at Linkou, Taoyuan City, Taiwan <br/>
-  ^c^ Department of Rheumatology, Chang Gung Memorial Hospital at Keelung, Keelung City, Taiwan <br/>
-  ^d^ Computational Health Informatics Program, Boston Children’s Hospital, Boston, MA, USA <br/>
+  ^c^ Syu Kang Sport Clinic, Taipei, Taiwan <br/>
+  ^d^ d Department of Medicine, Brigham and Women’s Hospital, Boston, USA <br/>
+  ^e^ Department of Rheumatology, Chang Gung Memorial Hospital at Keelung, Keelung City, Taiwan <br/>
+  ^f^ Computational Health Informatics Program, Boston Children’s Hospital, Boston, MA, USA <br/>
   ^#^ Chang and Wang contribute equally to this work <br/>
   ^\*^ Corresponding Author <br/>
 output:

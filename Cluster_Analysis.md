@@ -1,18 +1,53 @@
-**Identifying heterogeneous subgroups of systemic connective tissue
-diseases by applying a joint dimension reduction and clustering approach
-to immunomarkers : a retrospective study** <br/>- cluster analysis
+**Identifying heterogeneous subgroups of systemic autoimmune diseases by
+applying a joint dimension reduction and clustering approach to
+immunomarkers : a retrospective study** <br/>- cluster analysis
 ================
-**Chia-Wei Chang<sup>a,#</sup>, Hsin-Yao Wang<sup>b,#</sup>, Wei-Lin
-Lo<sup>c</sup>, Wei-Ting Lin<sup>b</sup>, Jia-Ruei Yu<sup>b</sup>, Yi-Ju
+**Chia-Wei Chang<sup>a,#</sup>, Hsin-Yao Wang<sup>b,#</sup>, Wan-Ying
+Lin<sup>c</sup>, Yu-Chiang Wang<sup>d</sup>, Wei-Lin Lo<sup>e</sup>,
+Wei-Ting Lin<sup>b</sup>, Jia-Ruei Yu<sup>b</sup>, Yi-Ju
 Tseng<sup>a,d,\*</sup>** <br/> <sup>a</sup> Department of Computer
 Science, National Yang Ming Chiao Tung University, Hsinchu, Taiwan <br/>
 <sup>b</sup> Department of Laxboratory Medicine, Chang Gung Memorial
-Hospital at Linkou, Taoyuan City, Taiwan <br/> <sup>c</sup> Department
-of Rheumatology, Chang Gung Memorial Hospital at Keelung, Keelung City,
-Taiwan <br/> <sup>d</sup> Computational Health Informatics Program,
-Boston Children’s Hospital, Boston, MA, USA <br/> <sup>\#</sup> Chang
-and Wang contribute equally to this work <br/> <sup>\*</sup>
+Hospital at Linkou, Taoyuan City, Taiwan <br/> <sup>c</sup> Syu Kang
+Sport Clinic, Taipei, Taiwan <br/> <sup>d</sup> d Department of
+Medicine, Brigham and Women’s Hospital, Boston, USA <br/> <sup>e</sup>
+Department of Rheumatology, Chang Gung Memorial Hospital at Keelung,
+Keelung City, Taiwan <br/> <sup>f</sup> Computational Health Informatics
+Program, Boston Children’s Hospital, Boston, MA, USA <br/> <sup>\#</sup>
+Chang and Wang contribute equally to this work <br/> <sup>\*</sup>
 Corresponding Author <br/>
+
+<style type="text/css">
+h1.title {
+  font-size: 28px;
+  /* color: royalblue; */
+}
+
+h1 {
+  font-size: 28px;
+}
+
+h2 {
+  font-size: 24px;
+}
+
+h3 {
+  font-size: 20px;
+}
+
+h4 {
+  font-size: 16px;
+}
+
+<!-- code.r{ /* Code block */ -->
+<!--     font-size: 12px; -->
+<!-- } -->
+
+<!-- pre { /* Code block - determines code spacing between lines */ -->
+<!--     font-size: 14px; -->
+<!-- } -->
+
+</style>
 
 ------------------------------------------------------------------------
 
@@ -86,7 +121,7 @@ source("./External_R_Functions/cramer'V matrix.R")
 ## Analysis-ready dataset[^1]
 
 From
-[Data_Wrangling.md](https://github.com/DHLab-TSENG/Heterogeneity-in-SCTD-paper/blob/main/Data_Wrangling.md)
+[Data_Wrangling.md](https://github.com/DHLab-TSENG/Heterogeneity-in-SAD-paper/blob/main/Data_Wrangling.md)
 
 ``` r
 monoCTD_dataset <- 
@@ -149,7 +184,7 @@ cluster_analysis_data <-
 
 <br/>
 
-## Subset for selected SCTDs
+## Subset for selected SADs
 
 ``` r
 selected_disease_groups <- 
@@ -404,9 +439,9 @@ p_value_table <-
         .[,"p value" := ifelse(`p value`<0.001,"<0.001",sprintf("%.3f",`p value`))]) %>% 
     rbindlist(.)
 
-# statistics calculations for continuous variables by SCTD group
+# statistics calculations for continuous variables by SAD group
 table_one_continuous_var <- 
-  # extract desired statistics and merge them into one data.table by SCTD group
+  # extract desired statistics and merge them into one data.table by SAD group
   map(table_one_by_diseases$ContTable,
       ~ .x[,c("n","mean","sd")] %>% 
         as.data.table(x = .,keep.rownames = "Statistics") %>% 
@@ -430,9 +465,9 @@ table_one_continuous_var <-
         by.y = "Variable")
   
 
-# statistics calculations for categorical variables by SCTD group
+# statistics calculations for categorical variables by SAD group
 table_one_categorical_var <- 
-  # extract desired statistics and merge them into one data.table by SCTD group
+  # extract desired statistics and merge them into one data.table by SAD group
   map(table_one_by_diseases$CatTable,
       ~ map(.x, ~ .x[,c("level","freq","percent")]) %>% 
         rbindlist(.,idcol = "Ori_Variable")
@@ -572,7 +607,7 @@ cluster_biplots <-
                             aes_string(x = .x[1],y = .x[2],fill = .x[5]),color = NA,
                             alpha = 0.2) +
           scale_linetype_discrete(name = "Immunomaker Test Results") +
-          scale_shape_discrete(name = "SCTD",labels = map_chr(selected_disease_groups,
+          scale_shape_discrete(name = "SAD",labels = map_chr(selected_disease_groups,
                                                               ~ str_split(.x,"\\ ") %>%
                                                                 map_chr(.,~ str_sub(.x,1,1) %>% toupper(.) %>% str_flatten(.)))) +
           scale_colour_manual(name = "Cluster",values = cluster_color_set) +
@@ -593,6 +628,9 @@ cluster_biplots <-
 ```
 
 <br/>
+
+    ## Warning: Using the `size` aesthetic in this geom was deprecated in ggplot2 3.4.0.
+    ## ℹ Please use `linewidth` in the `default_aes` field and elsewhere instead.
 
 <br/>
 
@@ -649,7 +687,7 @@ profile_by_cluster_integrated <-
                          breaks = seq(0,1,by = 0.2),
                          labels = seq(0,100,by = 20),
                          expand = c(0,0),) +
-      scale_fill_manual(name = "CTDs",values = pal_jama()(3)) +
+      scale_fill_manual(name = "SAD",values = pal_jama()(3)) +
       facet_grid(~ Cluster_label, space = "free_x", scales = "free_x",switch = "x") +
       theme_bw() +
       theme(legend.title = element_text(face = "bold",size = rel(1)),
@@ -670,7 +708,7 @@ profile_by_cluster_integrated <-
 
 <br/>
 
-## Profile the number and proportion of case in each SCTD group
+## Profile the number and proportion of case in each SAD group
 
 ``` r
 cluster_size_string <- 
@@ -714,7 +752,7 @@ profile_by_group_integrated <-
   ggplot(profile_by_group_holistic_data,aes(width = Group_proportion)) +
       geom_bar(aes(x = x_position,y = Cluster_proportion_within_group,fill = Cluster),
                stat = "identity",position = "stack",alpha = 0.7) +
-      scale_x_continuous(name = "CTDs\n(n)",
+      scale_x_continuous(name = "SAD\n(n)",
                          breaks = unique(profile_by_group_holistic_data$x_position),
                          labels = unique(profile_by_group_holistic_data$Group),
                          expand = c(0.001,0.001)) +
@@ -1041,7 +1079,7 @@ ggexport(concatenated_immunomarkers_profile_plot,
 <br/>
 
 Next section:
-[Clinical_Implication_Analysis.md](https://github.com/DHLab-TSENG/Heterogeneity-in-SCTD-paper/blob/main/Clinical_Implication_Analysis.md)
+[Clinical_Implication_Analysis.md](https://github.com/DHLab-TSENG/Heterogeneity-in-SAD-paper/blob/main/Clinical_Implication_Analysis.md)
 
 [^1]: Data availability in this repository is restricted due to the
     regulation of the law on the protection of patients’ data

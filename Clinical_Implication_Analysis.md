@@ -1,19 +1,54 @@
-**Identifying heterogeneous subgroups of systemic connective tissue
-diseases by applying a joint dimension reduction and clustering approach
-to immunomarkers : a retrospective study** <br/>- clinical implication
+**Identifying heterogeneous subgroups of systemic autoimmune diseases by
+applying a joint dimension reduction and clustering approach to
+immunomarkers : a retrospective study** <br/>- clinical implication
 analysis
 ================
-**Chia-Wei Chang<sup>a,#</sup>, Hsin-Yao Wang<sup>b,#</sup>, Wei-Lin
-Lo<sup>c</sup>, Wei-Ting Lin<sup>b</sup>, Jia-Ruei Yu<sup>b</sup>, Yi-Ju
+**Chia-Wei Chang<sup>a,#</sup>, Hsin-Yao Wang<sup>b,#</sup>, Wan-Ying
+Lin<sup>c</sup>, Yu-Chiang Wang<sup>d</sup>, Wei-Lin Lo<sup>e</sup>,
+Wei-Ting Lin<sup>b</sup>, Jia-Ruei Yu<sup>b</sup>, Yi-Ju
 Tseng<sup>a,d,\*</sup>** <br/> <sup>a</sup> Department of Computer
 Science, National Yang Ming Chiao Tung University, Hsinchu, Taiwan <br/>
 <sup>b</sup> Department of Laxboratory Medicine, Chang Gung Memorial
-Hospital at Linkou, Taoyuan City, Taiwan <br/> <sup>c</sup> Department
-of Rheumatology, Chang Gung Memorial Hospital at Keelung, Keelung City,
-Taiwan <br/> <sup>d</sup> Computational Health Informatics Program,
-Boston Children’s Hospital, Boston, MA, USA <br/> <sup>\#</sup> Chang
-and Wang contribute equally to this work <br/> <sup>\*</sup>
+Hospital at Linkou, Taoyuan City, Taiwan <br/> <sup>c</sup> Syu Kang
+Sport Clinic, Taipei, Taiwan <br/> <sup>d</sup> d Department of
+Medicine, Brigham and Women’s Hospital, Boston, USA <br/> <sup>e</sup>
+Department of Rheumatology, Chang Gung Memorial Hospital at Keelung,
+Keelung City, Taiwan <br/> <sup>f</sup> Computational Health Informatics
+Program, Boston Children’s Hospital, Boston, MA, USA <br/> <sup>\#</sup>
+Chang and Wang contribute equally to this work <br/> <sup>\*</sup>
 Corresponding Author <br/>
+
+<style type="text/css">
+h1.title {
+  font-size: 28px;
+  /* color: royalblue; */
+}
+
+h1 {
+  font-size: 28px;
+}
+
+h2 {
+  font-size: 24px;
+}
+
+h3 {
+  font-size: 20px;
+}
+
+h4 {
+  font-size: 16px;
+}
+
+<!-- code.r{ /* Code block */ -->
+<!--     font-size: 12px; -->
+<!-- } -->
+
+<!-- pre { /* Code block - determines code spacing between lines */ -->
+<!--     font-size: 14px; -->
+<!-- } -->
+
+</style>
 
 ------------------------------------------------------------------------
 
@@ -107,7 +142,7 @@ sapply(sapply(strsplit(.ghub_pkgs,"/"),`[`,2),
 # Import datasets[^1]
 
 From
-[Data_Wrangling.md](https://github.com/DHLab-TSENG/Heterogeneity-in-SCTD-paper/blob/main/Data_Wrangling.md)
+[Data_Wrangling.md](https://github.com/DHLab-TSENG/Heterogeneity-in-SAD-paper/blob/main/Data_Wrangling.md)
 
 ``` r
 raw_diagnosis_data    <- readRDS("./Dataset/D1_1_concatenated_diagnosis_data(dt_query_dx_data).rds")
@@ -116,7 +151,7 @@ CTD_diagnosis_summary <- readRDS("./Dataset/A1_2_diagnosis_Count_eachDx_data.rds
 ```
 
 From
-[Cluster_Analysis.md](https://github.com/DHLab-TSENG/Heterogeneity-in-SCTD-paper/blob/main/Cluster_Analysis.md)
+[Cluster_Analysis.md](https://github.com/DHLab-TSENG/Heterogeneity-in-SAD-paper/blob/main/Cluster_Analysis.md)
 
 ``` r
 PC_data   <- readRDS("./Dataset/PC_data.rds")
@@ -160,7 +195,7 @@ CustomGrepGroup_summarised_groupedDT_sufficient_followup <-
 
 <br/>
 
-## Profile number of remaining subjects after follow-up period filter by SCTD group
+## Profile number of remaining subjects after follow-up period filter by SAD group
 
 ``` r
 Sufficient_followup_profile <- 
@@ -466,7 +501,7 @@ comorbidity_CCS_proportion_byGroup_data <-
     dcast.data.table(., ... ~ Cluster,value.var = "Proportion_of_affected") %>% 
     .[order(Group,-`Cluster 1`),] %>% 
     .[,Comorbidity := factor(Comorbidity,levels = unique(Comorbidity))] %>% 
-    # Split by SCTD group
+    # Split by SAD group
     split(.,by = "Group",keep.by = FALSE) %>% 
     # Transform format of dataset
     map(., ~ as.matrix(.x,rownames = "Comorbidity"))
@@ -663,7 +698,7 @@ comorbidity_ICD_proportion_byGroup_data <-
   dcast.data.table(., ... ~ Cluster,value.var = "Proportion_of_affected") %>% 
   .[order(Group,-`Cluster 1`),] %>% 
   .[,Comorbidity := factor(Comorbidity,levels = unique(Comorbidity))] %>% 
-  # Split by SCTD group
+  # Split by SAD group
   split(.,by = "Group",keep.by = FALSE) %>% 
   # Transform format of dataset
   map(., ~ as.matrix(.x,rownames = "Comorbidity"))
