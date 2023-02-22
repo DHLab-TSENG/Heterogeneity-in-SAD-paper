@@ -559,7 +559,7 @@ save_as_image(table_one_flextable,
 #          "Table_of_distribution_of_variables",
 #          ".png",
 #          " \\",
-#          "./Files_for_Publication/",
+#          "./Heterogeneity-in-SAD-paper_files/",
 #          "Table1_distribution_of_variables",
 #          ".png"
 #          )
@@ -841,12 +841,12 @@ ggexport(concatenated_clustering_results_plot,
 
 # system(
 #   paste0("cp \\",
-#          
+# 
 #          "./Cluster_Analysis_files/Cluster_profile/",
 #          "clustering_results_and_cluster_content_profile",
 #          ".jpeg",
 #          " \\",
-#          "./Files_for_Publication/",
+#          "./Heterogeneity-in-SAD-paper_files/",
 #          "Figure2_clustering_results_and_cluster_content_profile",
 #          ".jpeg"
 #          )
@@ -1152,12 +1152,12 @@ ggexport(concatenated_immunomarkers_profile_plot,
 
 # system(
 #   paste0("cp \\",
-#          
+# 
 #          "./Cluster_Analysis_files/Cluster_profile/",
 #          "immunomarker_profile",
 #          ".jpeg",
 #          " \\",
-#          "./Files_for_Publication/",
+#          "./Heterogeneity-in-SAD-paper_files/",
 #          "Figure3_immunomarker_profile_and_sen_spe",
 #          ".jpeg"
 #          )
