@@ -799,7 +799,7 @@ ggexport(concatenated_comorbidity_prevalence_byGroup_plot,
 #          "concatenated_comorbidity_prevalence_byGroup_plot",
 #          ".jpeg",
 #          " \\",
-#          "./Files_for_Publication/",
+#          "./Heterogeneity-in-SAD-paper_files/",
 #          "Figure4_concatenated_comorbidity_prevalence_byGroup_plot",
 #          ".jpeg"
 #          )
