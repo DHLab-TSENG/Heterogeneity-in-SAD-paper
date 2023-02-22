@@ -304,7 +304,7 @@ cluster_analysis_ready_data <-
 # Cluster analysis
 ## MCA k-means
 ```{r Cluster analsyis using MCA k-means, warning=FALSE, message=FALSE, results = 'hide', cache=TRUE}
-plan(multisession, workers = 5)
+plan(multisession, workers = 6)
 
 alphak_vector <- 0.5
 seed_vector   <- 365 # for MAC OS: 365; on Linux OS, use 20211111 instead.
@@ -550,8 +550,20 @@ save_as_image(table_one_flextable,
               path = "./Cluster_Analysis_files/Table_of_distribution_of_variables.png",
               expand = 20,
               zoom = 4,
-              webshot = "webshot2")
+              webshot = "webshot")
 
+# system(
+#   paste0("cp \\",
+# 
+#          "./Cluster_Analysis_files/",
+#          "Table_of_distribution_of_variables",
+#          ".png",
+#          " \\",
+#          "./Files_for_Publication/",
+#          "Table1_distribution_of_variables",
+#          ".png"
+#          )
+#   )
 ```
 
 ***
@@ -827,6 +839,18 @@ ggexport(concatenated_clustering_results_plot,
                            ".jpeg"),
          width = 12000,height = 8000,res = 1000,verbose = FALSE)
 
+# system(
+#   paste0("cp \\",
+#          
+#          "./Cluster_Analysis_files/Cluster_profile/",
+#          "clustering_results_and_cluster_content_profile",
+#          ".jpeg",
+#          " \\",
+#          "./Files_for_Publication/",
+#          "Figure2_clustering_results_and_cluster_content_profile",
+#          ".jpeg"
+#          )
+#   )
 ```
 [^2]: Please refer to the manuscript for **Figure 2**
 
@@ -1126,6 +1150,18 @@ ggexport(concatenated_immunomarkers_profile_plot,
                            ".jpeg"),
          width = 20000,height = 16000,res = 1200,verbose = FALSE)
 
+# system(
+#   paste0("cp \\",
+#          
+#          "./Cluster_Analysis_files/Cluster_profile/",
+#          "immunomarker_profile",
+#          ".jpeg",
+#          " \\",
+#          "./Files_for_Publication/",
+#          "Figure3_immunomarker_profile_and_sen_spe",
+#          ".jpeg"
+#          )
+#   )
 ```
 <br/>
 

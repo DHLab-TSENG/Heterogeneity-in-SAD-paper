@@ -768,7 +768,7 @@ comorbidity_ICD_prevalence_byGroup_plot <-
 ```
 <br/>
 
-## Combine heatmaps of CCS and ICD category into a uniframe[^1]
+## Combine heatmaps of CCS and ICD category into a uniframe - Figure 4[^1]
 ```{r Combine heatmaps of CCS and ICD category into a uniframe, echo=FALSE, message=FALSE, results='hide'}
 concatenated_comorbidity_prevalence_byGroup_plot <- 
   cbind(rbind(comorbidity_CCS_prevalence_byGroup_plot[[1]]$gtable,
@@ -788,9 +788,21 @@ concatenated_comorbidity_prevalence_byGroup_plot <-
 
 ggexport(concatenated_comorbidity_prevalence_byGroup_plot,
          filename = paste0("./Clinical_Implication_Analysis_files/",
-                           "Figure4_concatenated_comorbidity_prevalence_byGroup_plot",
+                           "concatenated_comorbidity_prevalence_byGroup_plot",
                            ".jpeg"),
          width = 8000,height = 13000,res = 1000,verbose = FALSE)
 
+# system(
+#   paste0("cp \\",
+# 
+#          "./Clinical_Implication_Analysis_files/",
+#          "concatenated_comorbidity_prevalence_byGroup_plot",
+#          ".jpeg",
+#          " \\",
+#          "./Files_for_Publication/",
+#          "Figure4_concatenated_comorbidity_prevalence_byGroup_plot",
+#          ".jpeg"
+#          )
+#   )
 ```
 [^1]: Please refer to the manuscript for **Figure 4**.
