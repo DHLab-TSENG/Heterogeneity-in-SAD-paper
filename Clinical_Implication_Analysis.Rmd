@@ -789,19 +789,20 @@ concatenated_comorbidity_prevalence_byGroup_plot <-
 ggexport(concatenated_comorbidity_prevalence_byGroup_plot,
          filename = paste0("./Clinical_Implication_Analysis_files/",
                            "concatenated_comorbidity_prevalence_byGroup_plot",
-                           ".jpeg"),
-         width = 8000,height = 13000,res = 1000,verbose = FALSE)
+                           ".pdf"),
+         # width = 8000,height = 13000,res = 1000,verbose = FALSE) # for jpeg
+         width = 8,height = 13,res = 1000,verbose = FALSE) # for jpeg
 
 # system(
 #   paste0("cp \\",
 # 
 #          "./Clinical_Implication_Analysis_files/",
 #          "concatenated_comorbidity_prevalence_byGroup_plot",
-#          ".jpeg",
+#          ".pdf",
 #          " \\",
 #          "./Heterogeneity-in-SAD-paper_files/",
 #          "Figure4_concatenated_comorbidity_prevalence_byGroup_plot",
-#          ".jpeg"
+#          ".pdf"
 #          )
 #   )
 ```
