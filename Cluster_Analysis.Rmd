@@ -830,7 +830,8 @@ concatenated_clustering_results_plot <-
                       nrow = 2,labels = c("B","C")),
             ncol = 2,
             labels = c("A"),
-            widths = c(1.5,1))
+            widths = c(1.5,1)) +
+  theme(plot.margin = margin(2,.5,.5,.5, "cm")) 
 
 
 ggexport(concatenated_clustering_results_plot,
@@ -838,7 +839,7 @@ ggexport(concatenated_clustering_results_plot,
                            "clustering_results_and_cluster_content_profile",
                            ".pdf"),
          # width = 12000,height = 8000,res = 1000,verbose = FALSE) # for jpeg
-         width = 12,height = 8,res = 1000,verbose = FALSE) # for pdf
+         width = 11, height = 8.5 ,verbose = FALSE) # for pdf
 
 # system(
 #   paste0("cp \\",
@@ -852,6 +853,7 @@ ggexport(concatenated_clustering_results_plot,
 #          ".pdf"
 #          )
 #   )
+
 ```
 [^2]: Please refer to the manuscript for **Figure 2**
 
@@ -1029,7 +1031,6 @@ ggsave(filename = paste0("./Cluster_Analysis_files/Cluster_profile/",
        plot = profile_status_by_item_roseplot,
        device = "pdf",
        width = 10,height = 8.2,dpi = 600,
-       
        units = "in")
 
 ```
@@ -1144,14 +1145,15 @@ concatenated_immunomarkers_profile_plot <-
             sens_spec_result_plot,
             labels = c("","C"),
             nrow = 2,
-            ncol = 1)
+            ncol = 1) +
+  theme(plot.margin = margin(2.5,.5,.5,.5, "cm")) 
 
 ggexport(concatenated_immunomarkers_profile_plot,
          filename = paste0("./Cluster_Analysis_files/Cluster_profile/",
                            "immunomarker_profile",
                            ".pdf"),
          # width = 20000,height = 16000,res = 1200,verbose = FALSE) # for jpeg
-         width = 20,height = 16,res = 100,verbose = FALSE) # for pdf
+         width = 20,height = 16,verbose = FALSE) # for pdf
 
 # system(
 #   paste0("cp \\",

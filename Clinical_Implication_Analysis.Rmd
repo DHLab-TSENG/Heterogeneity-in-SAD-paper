@@ -784,14 +784,15 @@ concatenated_comorbidity_prevalence_byGroup_plot <-
                 str_c(rep(" ",40),collapse = ""),
                 "B. common comorbidities",
                 collapse = "")) +
-  theme(title = element_text(size = rel(.8), face = "bold"))
+  theme(title = element_text(size = rel(.8), face = "bold"),
+        plot.margin = margin(1.5,0,.5,0, "cm"))
 
 ggexport(concatenated_comorbidity_prevalence_byGroup_plot,
          filename = paste0("./Clinical_Implication_Analysis_files/",
                            "concatenated_comorbidity_prevalence_byGroup_plot",
                            ".pdf"),
          # width = 8000,height = 13000,res = 1000,verbose = FALSE) # for jpeg
-         width = 8,height = 13,res = 1000,verbose = FALSE) # for jpeg
+         width = 8, height = 13, verbose = FALSE) # for pdf
 
 # system(
 #   paste0("cp \\",
