@@ -179,10 +179,12 @@ Sufficient_followup_profile <-
 print(Sufficient_followup_profile)
 ```
 
-    ##                           Group Sufficient_N    N Sufficient_proportion
-    ## 1:         Rheumatoid arthritis         3808 5696                  66.9
-    ## 2:           Sjogren's syndrome         2043 3541                  57.7
-    ## 3: Systemic lupus erythematosus         1887 2686                  70.3
+    ## Key: <Group>
+    ##                           Group Sufficient_N     N Sufficient_proportion
+    ##                          <char>        <int> <int>                 <num>
+    ## 1:         Rheumatoid arthritis         3808  5696                  66.9
+    ## 2:           Sjogren's syndrome         2043  3541                  57.7
+    ## 3: Systemic lupus erythematosus         1887  2686                  70.3
 
 <br/>
 
@@ -239,12 +241,12 @@ plan(sequential)
 
 ``` r
 CCS_catagories <- 
-  system("curl -s https://www.hcup-us.ahrq.gov/toolssoftware/ccs/AppendixASingleDX.txt |
+  system("curl -s https://hcup-us.ahrq.gov/toolssoftware/ccs/AppendixASingleDX.txt |
           awk 'NF && /^[1-9]/ {print $0}' ",
          intern = TRUE)
 
 CCS_bundle <- 
-  system("curl -s https://www.hcup-us.ahrq.gov/toolssoftware/ccs/AppendixASingleDX.txt |
+  system("curl -s https://hcup-us.ahrq.gov/toolssoftware/ccs/AppendixASingleDX.txt |
           awk 'NR>4 && !/^[1-9#]/ {print $0}' ",
          intern = TRUE) %>% 
   str_trim(.,"both") %>%
@@ -261,7 +263,14 @@ split_index <-
        ~ rep(.x,.y)) %>% 
   flatten_chr(.) %>% 
   data.table(CCS_Group_Index = .)
+```
 
+    ## Warning: Automatic coercion from integer to character was deprecated in purrr 1.0.0.
+    ## ℹ Please use an explicit call to `as.character()` within `map_chr()` instead.
+    ## ℹ The deprecated feature was likely used in the base package.
+    ##   Please report the issue to the authors.
+
+``` r
 CCS_reference <- 
   cbind(CCS_bundle,split_index) %>% 
   split(.,by = "CCS_Group_Index") %>% 
@@ -788,7 +797,7 @@ comorbidity_ICD_prevalence_byGroup_plot <-
 
 <br/>
 
-## Combine heatmaps of CCS and ICD category into a uniframe[^2]
+## Combine heatmaps of CCS and ICD category into a uniframe - Figure 4[^2]
 
 [^1]: Data availability in this repository is restricted due to the
     regulation of the law on the protection of patients’ data
