@@ -232,12 +232,12 @@ plan(sequential)
 ## Generate CCS reference database by transforming website data derived from HCUP
 ```{r Generate CCS reference database}
 CCS_catagories <- 
-  system("curl -s https://www.hcup-us.ahrq.gov/toolssoftware/ccs/AppendixASingleDX.txt |
+  system("curl -s https://hcup-us.ahrq.gov/toolssoftware/ccs/AppendixASingleDX.txt |
           awk 'NF && /^[1-9]/ {print $0}' ",
          intern = TRUE)
 
 CCS_bundle <- 
-  system("curl -s https://www.hcup-us.ahrq.gov/toolssoftware/ccs/AppendixASingleDX.txt |
+  system("curl -s https://hcup-us.ahrq.gov/toolssoftware/ccs/AppendixASingleDX.txt |
           awk 'NR>4 && !/^[1-9#]/ {print $0}' ",
          intern = TRUE) %>% 
   str_trim(.,"both") %>%
