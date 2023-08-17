@@ -265,8 +265,8 @@ eligible_case_list <-
 ```
 <br/>
 
-### Identify eligible cases with a single CTD over the observed courses and exclude UCTD cases
-```{r Identify eligible cases with a single CTD over the observed courses and exclude UCTD cases}
+### Identify eligible cases with a single SAD over the observed courses and exclude UCTD cases
+```{r Identify eligible cases with a single SAD over the observed courses and exclude UCTD cases}
 eligible_mono_CTD_dx_dataset <- 
   pluck(CustomGrepGroup,"groupedDT") %>% 
   .[ID %in% map_df(eligible_case_list,~ .x[,.(ID)])$ID, ] %>% 
@@ -277,6 +277,41 @@ eligible_mono_CTD_dx_dataset <-
   keep(., ~ nrow(.x)>0) %>% 
   rbindlist(.)
 
+```
+<br/>
+
+### Identify cases with multiple SADs over the observed courses and exclude UCTD cases
+```{r Proportion of multiple SADs, echo=TRUE, warning=FALSE, message=TRUE}
+number_of_multi_CTD <- 
+  pluck(CustomGrepGroup,"groupedDT") %>% 
+    .[ID %in% map_df(eligible_case_list,~ .x[,.(ID)])$ID, ] %>% 
+    .[,Group := factor(Group,levels = disease_ICD_table$Group)] %>% 
+    split(.,by = "ID") %>% 
+    map(., ~ .x[.x[,str_detect(Group,"Undifferentiated connective tissue disease",negate = TRUE)] ]) %>% 
+    
+    map(., ~ .x[.x[,uniqueN(Group)>1] ]) %>% 
+    keep(., ~ nrow(.x)>1) %>% 
+    rbindlist(.) %>% 
+    
+    # To check details for SAD types
+    # .[,unique(.SD), .SDcols = c("ID", "Group")]
+    # To check how many were affected by multiple SADs
+    .[, uniqueN(ID)]
+
+numberi_of_all_wo_UCTD <- 
+  pluck(CustomGrepGroup,"groupedDT") %>% 
+  .[ID %in% map_df(eligible_case_list,~ .x[,.(ID)])$ID, ] %>% 
+  .[,Group := factor(Group,levels = disease_ICD_table$Group)] %>% 
+  split(.,by = "ID") %>% 
+  map(., ~ .x[.x[,str_detect(Group,"Undifferentiated connective tissue disease",negate = TRUE)] ]) %>% 
+  rbindlist(.) %>% 
+  .[, uniqueN(ID)]
+
+print(
+  paste0("Cases of multiple SADs account for ",
+         round(number_of_multi_CTD/numberi_of_all_wo_UCTD*100,1),
+         "% out of all SADs without for UCTD")
+  )
 ```
 <br/>
 

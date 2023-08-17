@@ -103,7 +103,7 @@ sapply(.cran_pkgs,
 
 ## Install packages from GitHub
 ```{r GitHub packages, warning=FALSE, message=FALSE}
-.ghub_pkgs <- c("DHLab-TSENG/dxpr")
+.ghub_pkgs <- c("DHLab-TSENG/dxpr", "ddsjoberg/gtsummary","rstudio/gt")
 
 if (any(!sapply(strsplit(.ghub_pkgs,"/"),`[`,2) %in% installed.packages())){
   library(devtools)
@@ -252,8 +252,8 @@ split_index <-
   map2(seq(1:length(CCS_catagories)),
        .,
        ~ rep(.x,.y)) %>% 
-  flatten_chr(.) %>% 
-  data.table(CCS_Group_Index = .)
+  flatten(.) %>% 
+  data.table(CCS_Group_Index = as.character(.))
 
 CCS_reference <- 
   cbind(CCS_bundle,split_index) %>% 
@@ -769,7 +769,7 @@ comorbidity_ICD_prevalence_byGroup_plot <-
 <br/>
 
 ## Combine heatmaps of CCS and ICD category into a uniframe - Figure 4[^1]
-```{r Combine heatmaps of CCS and ICD category into a uniframe, echo=FALSE, message=FALSE, results='hide'}
+```{r Combine heatmaps of CCS and ICD category into a uniframe, echo=TRUE, message=FALSE, results='hide'}
 concatenated_comorbidity_prevalence_byGroup_plot <- 
   cbind(rbind(comorbidity_CCS_prevalence_byGroup_plot[[1]]$gtable,
               comorbidity_CCS_prevalence_byGroup_plot[[2]]$gtable,
@@ -808,3 +808,261 @@ ggexport(concatenated_comorbidity_prevalence_byGroup_plot,
 #   )
 ```
 [^1]: Please refer to the manuscript for **Figure 4**.
+
+## Prepare datasets for profiling the proportion differences between clusters
+```{r Datasets for profiling the proportion differences, echo=TRUE, message=FALSE, results='hide'}
+library(gtsummary)
+library(gt)
+
+# CCS
+comorbidity_CCS_proportion_test_data <- 
+  merge(table_one_CCS_data,
+        PC_data[,unique(.SD),.SDcols = c("IDCODE","Group")],
+        by.x = "ID",
+        by.y = "IDCODE",
+        all.x = TRUE)
+
+# ICD
+comorbidity_ICD_proportion_test_data <- 
+  merge(table_one_ICD_data,
+          PC_data[,unique(.SD),.SDcols = c("IDCODE","Group")],
+          by.x = "ID",
+          by.y = "IDCODE",
+          all.x = TRUE)
+
+comorbidity_proportion_diff_test_data <- 
+  map(list(comorbidity_CCS_proportion_test_data,
+           comorbidity_ICD_proportion_test_data),
+      ~ .x[, .SD, .SDcols = -c("ID")] %>% 
+      .[, names(.) := map(.SD, ~ as.character(.x))]
+      )
+
+```
+<br/>
+
+## Conduct statistical test for the proportion differences in the clusters - between six groups
+```{r tests for the proportion differences between six groups, echo=TRUE, message=FALSE, results='asis'}
+fisher_test_fun <- 
+  function(data, variable, by, ...) {
+    copy(data) %>%
+    setDT() %>% 
+    .[, .SD, .SDcols = c(variable, by)] %>% 
+    .[, c(variable) := map(.SD,
+                           ~ factor(.x, 
+                                    levels = c("0","1"),
+                                    labels = c("Unaffected", "Affected"))
+                           ),
+      .SDcols = c(variable)] %>% 
+    setkeyv(., c(variable, by)) %>%
+    .[CJ(get(variable), get(by), unique = TRUE), 
+      .N, 
+      by = .EACHI] %>% 
+    dcast.data.table(.,
+                     ... ~ Cluster,
+                     value.var = "N",
+                     fill = 0,
+                     drop = c(FALSE,FALSE)
+                     ) %>% 
+    .[,RowSum := rowSums(.SD), .SDcols = -c(variable)] %>% 
+    
+    melt.data.table(., 
+                    id.vars = c("RowSum",variable), 
+                    variable.name = "by") %>% 
+    .[RowSum == 0,
+      value := fifelse(all(RowSum == 0) &
+                        by == sample(head(unique(by),1),1),
+                       1,
+                       value)] %>% 
+    dcast.data.table(., ... ~ by) %>% 
+    .[order(get(variable)),] %>% 
+    .[, .SD, .SDcols = -c("RowSum",variable)] %>% 
+    
+    fisher.test(.,
+                hybrid = TRUE, 
+                simulate.p.value = TRUE, 
+                B = 2000) %>% 
+    broom::tidy(.) %>% 
+    .$`p.value`
+    }
+
+
+between_six_groups_tbl <-
+  map(comorbidity_proportion_diff_test_data,
+      ~ group_by(.x, Group) %>% 
+        nest()
+      ) %>% 
+  map(.,
+      ~ pluck(.x, "data") %>% 
+        map(.,
+            ~ tbl_summary(.x,
+                          by = Cluster,
+                          type = all_categorical() ~ "dichotomous",
+                          missing = "no") %>% 
+              add_stat(fns = all_categorical() ~ fisher_test_fun) %>% 
+              modify_header(
+                list(all_stat_cols() ~ "**{level}**  \n(n = {style_number(n)})",
+                     add_stat_1 ~ "**p-value**"),
+                     label ~ "**Features**"
+                ) %>%
+              modify_footnote(all_stat_cols() ~ NA)
+            ) %>% 
+        tbl_merge(.,
+                  tab_spanner = str_c("**",c(unique(.x$Group)),"**")
+                  ) %>% 
+        as_gt() %>%
+          tab_options(table.font.size = "11",
+                      # table.font.names = "Times New Roman"
+                      ) %>%
+          text_transform(fn = function(x) { str_replace(x, "0 \\(0%\\)", "\\-") },
+                         locations = cells_body(columns = all_stat_cols())
+                         ) %>% 
+          text_transform(fn = function(x) { str_replace(x, "\\(", "<br>\\(") },
+                         locations = cells_body(columns = all_stat_cols())
+                         ) %>% 
+          fmt_number(columns = starts_with("add_stat"),
+                     decimals = 3) %>% 
+          text_transform(fn = function(x) { str_replace(x, "(0.000)", "<0.001") },
+                         locations = cells_body(columns = c(add_stat_1_1, add_stat_1_2, add_stat_1_3))
+                         ) %>% 
+          text_transform(fn = function(x) { str_replace(x, "(1.000)", "1") },
+                         locations = cells_body(columns = c(add_stat_1_1, add_stat_1_2, add_stat_1_3))
+                         ) %>% 
+          tab_style(locations = cells_body(columns = label),
+                      style = cell_text(weight = "bold")) %>% 
+          tab_style(locations = cells_body(columns = add_stat_1_1,rows = add_stat_1_1 < 0.05),
+                    style = cell_text(weight = "bold")) %>% 
+          tab_style(locations = cells_body(columns = add_stat_1_2,rows = add_stat_1_2 < 0.05),
+                    style = cell_text(weight = "bold")) %>% 
+          tab_style(locations = cells_body(columns = add_stat_1_3,rows = add_stat_1_3 < 0.05),
+                    style = cell_text(weight = "bold")) %>% 
+          tab_style(location = cells_body(columns = c(add_stat_1_1, add_stat_1_2, add_stat_1_3)),
+                    style = cell_fill(color = "grey70", alpha = 0.2)) %>% 
+          tab_style(location = cells_body(columns = c(stat_1_1, stat_3_1, stat_5_1, stat_1_2, stat_3_2, stat_5_2, stat_1_3, stat_3_3, stat_5_3)),
+                    style = cell_fill(color = "grey90", alpha = 0.2))
+      )
+
+```
+
+```{r display statistical test results, eval=FALSE, echo=FALSE}
+knitr::knit_print(between_six_groups_tbl)
+
+map2(between_six_groups_tbl,
+     list("CCS", "ICD"),
+     ~ .x %>% 
+       # as_raw_html() %>% 
+       gtsave(.,
+              filename = paste0(.y,"_proportion_differences_between_clusters.html"),
+              path = "./Clinical_Implication_Analysis_files/")
+     )
+```
+
+## Conduct statistical test for the proportions differences in the clusters - between each two groups
+```{r tests for the proportion differences between each two groups, echo=TRUE, message=FALSE, results='hide'}
+set.seed(2023)
+
+comp_pair <-
+  PC_data[, sort(unique(Cluster)) %>% str_c("Cluster ",.)] %>%
+  combn(., m = 2) %>% 
+  as.data.table(.) %>% 
+  as.list(.)
+
+between_each_two_groups_comp <- 
+  expand.grid(Group = PC_data[,levels(Group) %>% sort(.)],
+              Category = c("CCS", "ICD"),
+              Comp_pair = comp_pair,
+              stringsAsFactors = FALSE) %>% 
+  setDT(.) %>% 
+  .[, Data := map(comorbidity_proportion_diff_test_data,
+                  ~ .x %>% 
+                    split(., by = "Group")) %>% 
+              list_c(.) %>% 
+              map(.,
+                  ~ .x[, .SD, .SDcols = -c("Group")]) %>% 
+              rep(., 
+                  choose(PC_data[,uniqueN(Cluster)],2)) ] %>% 
+  # Data manipulation for the statistical test
+   .[, Test_data := 
+        map2(Data,
+             Comp_pair,
+            ~ .x[Cluster %in% c(.y), ] %>% 
+              melt.data.table(id.vars = "Cluster",
+                              variable.name = "Variable",
+                              value.name = "Affected") %>% 
+              .[,Affected := factor(Affected, 
+                                    levels = c("0","1"),
+                                    labels = c("Unaffected", "Affected"))] %>% 
+              split(., by = "Variable") %>% 
+              map(.,
+                  ~ .x[CJ(Cluster, Affected, unique = TRUE), 
+                       .N, 
+                       by = .EACHI,
+                       on = .(Cluster, Affected)] %>% 
+                    dcast.data.table(.,
+                                     ... ~ Cluster,
+                                     value.var = "N",
+                                     fill = 0,
+                                     drop = c(FALSE,FALSE)
+                                     ) %>% 
+                    .[,RowSum := rowSums(.SD), .SDcols = -c("Affected")] %>% 
+                    melt.data.table(., 
+                                id.vars = c("RowSum","Affected"), 
+                                variable.name = "Cluster") %>% 
+                    .[RowSum == 0,
+                      value := fifelse(all(RowSum == 0) &
+                                        Cluster == sample(unique(Cluster),1),
+                                       1,
+                                       value)] %>% 
+                    dcast.data.table(., ... ~ Cluster) %>% 
+                    .[order(Affected),] %>% 
+                    .[, .SD, .SDcols = -c("RowSum","Affected")]) )] %>% 
+  .[, Test_result := 
+        map(Test_data,
+            ~ .x %>% 
+              map(.,
+                  ~ fisher.test(.x,
+                                simulate.p.value = TRUE,
+                                B = 2000) %>% 
+                    broom::tidy(.) ) %>% 
+              rbindlist(.,idcol = "variable") %>% 
+              { data.table( Variable = .$variable,
+                            `p.value` = .$`p.value` %>% round(., 3),
+                            `lower.95.CI` = .$`conf.low` %>% round(., 3),
+                            `upper.95.CI` = .$`conf.high` %>% round(., 3) ) } %>% 
+              .[, significance := fifelse(`p.value` < 0.05, "***", "")] )] %>% 
+  .[, Comp_pair := 
+        map_chr(Comp_pair,
+                ~ str_c(.x, collapse = " vs. ") %>% 
+                  str_replace(., "vs\\.\\sCluster", "vs\\.") ) ] %>% 
+  .[order(Group, Comp_pair, Category),]
+
+```
+
+```{r query for test results of the proportion differences between each two groups, eval=FALSE, echo=FALSE}
+copy(between_each_two_groups_comp) %>% 
+  # .[Group %in% "Rheumatoid arthritis"] %>% 
+  .[Group %in% "Systemic lupus erythematosus"] %>%
+  # .[Group %in% "Sjogren's syndrome"] %>%
+  
+  # .[Category %in% "CCS",] %>%
+  .[Category %in% "ICD"] %>%
+  
+  # .[Comp_pair %in% "Cluster 1 vs. 2",] %>% #
+  # .[Comp_pair %in% "Cluster 1 vs. 3",] %>% #
+  # .[Comp_pair %in% "Cluster 1 vs. 4",] %>% #
+  # .[Comp_pair %in% "Cluster 1 vs. 5",] %>% #
+  # .[Comp_pair %in% "Cluster 1 vs. 6",] %>% #
+  # .[Comp_pair %in% "Cluster 2 vs. 3",] %>% #
+  # .[Comp_pair %in% "Cluster 2 vs. 4",] %>% #
+  # .[Comp_pair %in% "Cluster 2 vs. 5",] %>% #
+  # .[Comp_pair %in% "Cluster 2 vs. 6",] %>% #
+  # .[Comp_pair %in% "Cluster 3 vs. 4",] %>% #
+  # .[Comp_pair %in% "Cluster 3 vs. 5",] %>% #
+  # .[Comp_pair %in% "Cluster 3 vs. 6",] %>% #
+  # .[Comp_pair %in% "Cluster 4 vs. 5",] %>% #
+  # .[Comp_pair %in% "Cluster 4 vs. 6",] %>% #
+  # .[Comp_pair %in% "Cluster 5 vs. 6",] %>% #
+
+  .[, pluck(Test_result)] %>% 
+  .[order(`p.value`)]
+
+```
