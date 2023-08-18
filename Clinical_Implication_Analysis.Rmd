@@ -834,9 +834,9 @@ comorbidity_proportion_diff_test_data <-
   map(list(comorbidity_CCS_proportion_test_data,
            comorbidity_ICD_proportion_test_data),
       ~ .x[, .SD, .SDcols = -c("ID")] %>% 
-      .[, names(.) := map(.SD, ~ as.character(.x))]
+        .[, names(.) := map(.SD, ~ as.character(.x))] %>% 
+        .[, Group := factor(Group, levels = PC_data[,levels(Group)])]
       )
-
 ```
 <br/>
 
@@ -888,7 +888,8 @@ fisher_test_fun <-
 
 between_six_groups_tbl <-
   map(comorbidity_proportion_diff_test_data,
-      ~ group_by(.x, Group) %>% 
+      ~ .x[order(Group),] %>% 
+        group_by(., Group) %>% 
         nest()
       ) %>% 
   map(.,
@@ -958,7 +959,7 @@ map2(between_six_groups_tbl,
 
 ## Conduct statistical test for the proportions differences in the clusters - between each two groups
 ```{r tests for the proportion differences between each two groups, echo=TRUE, message=FALSE, results='hide'}
-set.seed(2023)
+set.seed(1111)
 
 comp_pair <-
   PC_data[, sort(unique(Cluster)) %>% str_c("Cluster ",.)] %>%
@@ -967,19 +968,22 @@ comp_pair <-
   as.list(.)
 
 between_each_two_groups_comp <- 
-  expand.grid(Group = PC_data[,levels(Group) %>% sort(.)],
+  expand.grid(Group = PC_data[,levels(Group)],
               Category = c("CCS", "ICD"),
               Comp_pair = comp_pair,
               stringsAsFactors = FALSE) %>% 
   setDT(.) %>% 
   .[, Data := map(comorbidity_proportion_diff_test_data,
                   ~ .x %>% 
+                    .[, Group := factor(Group, levels = PC_data[,levels(Group)])] %>% 
+                    .[order(Group),] %>% 
                     split(., by = "Group")) %>% 
               list_c(.) %>% 
               map(.,
                   ~ .x[, .SD, .SDcols = -c("Group")]) %>% 
               rep(., 
                   choose(PC_data[,uniqueN(Cluster)],2)) ] %>% 
+
   # Data manipulation for the statistical test
    .[, Test_data := 
         map2(Data,
@@ -1019,15 +1023,24 @@ between_each_two_groups_comp <-
         map(Test_data,
             ~ .x %>% 
               map(.,
-                  ~ fisher.test(.x,
-                                simulate.p.value = TRUE,
-                                B = 2000) %>% 
-                    broom::tidy(.) ) %>% 
-              rbindlist(.,idcol = "variable") %>% 
+              #     # Fisher's exact test
+              #     ~ fisher.test(.x,
+              #                   simulate.p.value = FALSE,
+              #                   B = 2000) %>%
+              #       broom::tidy(.) ) %>%
+              # rbindlist(.,idcol = "variable") %>%
+              # { data.table( Variable = .$variable,
+              #               `p.value` = .$`p.value` %>% round(., 3),
+              #               `lower.95.CI` = .$`conf.low` %>% round(., 3),
+              #               `upper.95.CI` = .$`conf.high` %>% round(., 3) ) } %>%
+                  # Barnard unconditional test
+                  ~ BarnardTest(x = as.matrix(.x),
+                                method = "boschloo") # “csm”, “csm approximate”, “z-pooled”, “z-unpooled”, “boschloo”, “santner and snell” %>%
+                    broom::tidy(.) ) %>%
+              rbindlist(.,idcol = "variable") %>%
               { data.table( Variable = .$variable,
-                            `p.value` = .$`p.value` %>% round(., 3),
-                            `lower.95.CI` = .$`conf.low` %>% round(., 3),
-                            `upper.95.CI` = .$`conf.high` %>% round(., 3) ) } %>% 
+                            `p.value` = .$`p.value` %>% round(., 3) ) } %>%
+              
               .[, significance := fifelse(`p.value` < 0.05, "***", "")] )] %>% 
   .[, Comp_pair := 
         map_chr(Comp_pair,
@@ -1039,19 +1052,19 @@ between_each_two_groups_comp <-
 
 ```{r query for test results of the proportion differences between each two groups, eval=FALSE, echo=FALSE}
 copy(between_each_two_groups_comp) %>% 
-  # .[Group %in% "Rheumatoid arthritis"] %>% 
-  .[Group %in% "Systemic lupus erythematosus"] %>%
   # .[Group %in% "Sjogren's syndrome"] %>%
+  # .[Group %in% "Rheumatoid arthritis"] %>%
+  .[Group %in% "Systemic lupus erythematosus"] %>%
   
-  # .[Category %in% "CCS",] %>%
-  .[Category %in% "ICD"] %>%
+  .[Category %in% "CCS",] %>%
+  # .[Category %in% "ICD"] %>%
   
   # .[Comp_pair %in% "Cluster 1 vs. 2",] %>% #
-  # .[Comp_pair %in% "Cluster 1 vs. 3",] %>% #
+  .[Comp_pair %in% "Cluster 1 vs. 3",] %>% # 
   # .[Comp_pair %in% "Cluster 1 vs. 4",] %>% #
   # .[Comp_pair %in% "Cluster 1 vs. 5",] %>% #
   # .[Comp_pair %in% "Cluster 1 vs. 6",] %>% #
-  # .[Comp_pair %in% "Cluster 2 vs. 3",] %>% #
+  # .[Comp_pair %in% "Cluster 2 vs. 3",] %>% # 
   # .[Comp_pair %in% "Cluster 2 vs. 4",] %>% #
   # .[Comp_pair %in% "Cluster 2 vs. 5",] %>% #
   # .[Comp_pair %in% "Cluster 2 vs. 6",] %>% #
@@ -1062,7 +1075,6 @@ copy(between_each_two_groups_comp) %>%
   # .[Comp_pair %in% "Cluster 4 vs. 6",] %>% #
   # .[Comp_pair %in% "Cluster 5 vs. 6",] %>% #
 
-  .[, pluck(Test_result)] %>% 
+  .[, pluck(Test_result)] %>%
   .[order(`p.value`)]
-
 ```
